@@ -1,0 +1,14 @@
+function TrialIndices = getTrialIndices(Corrs, Vars, R)
+    General = R.General;
+    size = length(Corrs)*length(Vars);
+
+    TrialIndices = zeros(72, size);
+    it = 1;
+        for i = 1:length(Corrs)
+            for j = 1:length(Vars)
+                Recindex = GetRecIndex(Corrs(i), Vars(j), General);
+                TrialIndices(:,it) = Recindex;
+                it = it+1;
+            end
+        end
+      end
