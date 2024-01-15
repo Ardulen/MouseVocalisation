@@ -324,8 +324,8 @@ classdef C_showTORCWidefield < handle
         for i = 1:O.DataDims(4)
             cAH = O.GUI.AH(i);
             hold(cAH, 'on');
-            O.GUI.(GUIDat)(i) = imagesc(cAH, O.X, O.Y,MapData(:, :, i)); %[cAH, AHB, cBar] = HF_imagescCraniotomy(Fig,cAH,cAH,O.X,O.Y,Adaptmap(:, :, O.P.Pl(i)),Adaptmap(:, :, O.P.Pl(i)),R.Frames.CraniotomyMask, 'AlphaF', 1, 'AlphaB', 0); 
-            O.GUI.(GUIDat)(i).AlphaData = O.CraniotomyMask.*1;
+            O.GUI.(GUIDat)(i) = imagesc(cAH, O.X, O.Y,MapData(:, :, i)'); %[cAH, AHB, cBar] = HF_imagescCraniotomy(Fig,cAH,cAH,O.X,O.Y,Adaptmap(:, :, O.P.Pl(i)),Adaptmap(:, :, O.P.Pl(i)),R.Frames.CraniotomyMask, 'AlphaF', 1, 'AlphaB', 0); 
+            O.GUI.(GUIDat)(i).AlphaData = O.CraniotomyMask'.*1;
             set(cAH,'YDir','reverse','DataAspectRatio',[1,1,1])
             set(cAH,'ButtonDownFcn',{@O.selectROI});
             colormap(cAH, 'jet')
@@ -439,7 +439,7 @@ classdef C_showTORCWidefield < handle
         for i = 1:O.DataDims(4)
             PlotVis = O.GUI.ROIAverage(i).Visible;
             delete(O.GUI.ROIAverage(i));
-            O.GUI.ROIAverage(i) = plot(O.Time-2, 100*O.ROIAvgImage(:, i), 'Color', O.line_colors(i, :), 'LineStyle', O.line_styles(i), 'LineWidth', 1.5, 'Visible', PlotVis);
+            O.GUI.ROIAverage(i) = plot(O.Time-2, 100*O.ROIAvgImage(:, i)', 'Color', O.line_colors(i, :), 'LineStyle', O.line_styles(i), 'LineWidth', 1.5, 'Visible', PlotVis);
         end
       O.GUI.AH(7).YLim=[ROIAverageYLims(1),ROIAverageYLims(2)];
       axes(O.GUI.AH(8));

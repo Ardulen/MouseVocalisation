@@ -1,4 +1,4 @@
-function R =  C_createMouseVocalization(varargin)
+function R =  C_createMouseVocalizationTORC(varargin)
 %This file creates the speech stimuli that are used in the psychophysics
 %experiment. 
 %% PARSE PARAMETERS

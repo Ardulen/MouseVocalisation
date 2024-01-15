@@ -19,34 +19,55 @@ checkField(P, 'FR', 100);
     Parameters.NTrials = R.General.Paradigm.Trial;
     Parameters.PreTimes = R.General.Paradigm.Stimulus.Parameters.DurContext.Value;
     Parameters.VocFreqs = R.General.Paradigm.Stimulus.Parameters.VocalFrequencies.Value;
-    T.VocResp.PreTime = zeros([ImageSize, length(Parameters.PreTimes)]);
-    T.VocResp.Sil = zeros([ImageSize, length(Parameters.PreTimes)]);
+    Parameters.VocFreqsSil = R.General.Paradigm.Stimulus.Parameters.VocalFrequencies.Value;
+
+    for i =1:2
+        T.VocResp.PreTime(:, :, :, i) = zeros([ImageSize, length(Parameters.PreTimes)]);
+        T.VocResp.Sil(:, :, :, i) = zeros([ImageSize, length(Parameters.PreTimes)]);
+    end
     Data.Full = zeros([ImageSize, length(Time), length(Parameters.PreTimes)]);
     Data.Sil = zeros([ImageSize, length(Time), length(Parameters.PreTimes)]);
     VocStartFrame = zeros(1, length(Parameters.PreTimes));
+
     
     for i =1:length(Parameters.PreTimes)
         TrialNums = GetTrialNums(Parameters.Corrs, Parameters.Vars, Parameters.Reals, R.General, 0, Parameters.NTrials, Parameters.PreTimes(i), Parameters.VocFreqs);
         Data.Full(:, :, :, i) = squeeze(mean(R.Frames.AvgTime(:, :, :, TrialNums), 4));
         VocStartFrame(i) = (2+Parameters.PreTimes(i))*P.FR;
-        MaxVocResp = max(Data.Full(:, :, VocStartFrame(i):VocStartFrame(i)+10, i), [], 3);
+        [MaxVocResp, MaxVocIndex] = max(Data.Full(:, :, VocStartFrame(i):VocStartFrame(i)+10, i), [], 3);
         PreVocLvl = Data.Full(:, :, VocStartFrame(i), i);
-        T.VocResp.PreTime(:, :, i) = 100*(MaxVocResp-PreVocLvl);
+        [PostVocLvl, PostVocIndex] = min(Data.Full(:, :, VocStartFrame(i)+5:VocStartFrame(i)+15, i), [], 3);
+        T.VocResp.PreTime(:, :, i, 1) = 100*(MaxVocResp-PreVocLvl);
+        a = sqrt((MaxVocResp-PreVocLvl).^2+(VocStartFrame(i)-MaxVocIndex).^2);
+        b = sqrt((PostVocIndex-VocStartFrame(i)).^2+(PostVocLvl-PreVocLvl).^2);
+        c = sqrt((MaxVocResp-PostVocLvl).^2+(PostVocIndex-MaxVocIndex).^2);
+        s = (a+b+c)./2;
+        T.VocResp.PreTime(:, :, i, 2) = 100*sqrt(s.*(s-a).*(s-b).*(s-c));
         TrialNums = GetTrialNums(Parameters.Corrs, Parameters.Vars, Parameters.Reals, R.General, 1, Parameters.NTrials, Parameters.PreTimes(i), Parameters.VocFreqs);
         Data.Full(:, :, :, i+4) = squeeze(mean(R.Frames.AvgTime(:, :, :, TrialNums), 4));
-        T.VocResp.Sil(:, :, i) = 100*(max(Data.Full(:, :, VocStartFrame(i):VocStartFrame(i)+10, i+4), [], 3)-Data.Full(:, :, VocStartFrame(i), i+4));
+        T.VocResp.Sil(:, :, i, 1) = 100*(max(Data.Full(:, :, VocStartFrame(i):VocStartFrame(i)+10, i+4), [], 3)-Data.Full(:, :, VocStartFrame(i), i+4));
+        [MaxVocResp, MaxVocIndex] = max(Data.Full(:, :, VocStartFrame(i):VocStartFrame(i)+10, i+4), [], 3);
+        PreVocLvl = Data.Full(:, :, VocStartFrame(i), i+4);
+        [PostVocLvl, PostVocIndex] = min(Data.Full(:, :, VocStartFrame(i)+5:VocStartFrame(i)+15, i+4), [], 3);
+        a = sqrt((MaxVocResp-PreVocLvl).^2+(VocStartFrame(i)-MaxVocIndex).^2);
+        b = sqrt((PostVocIndex-VocStartFrame(i)).^2+(PostVocLvl-PreVocLvl).^2);
+        c = sqrt((MaxVocResp-PostVocLvl).^2+(PostVocIndex-MaxVocIndex).^2);
+        s = (a+b+c)./2;
+        T.VocResp.Sil(:, :, i, 2) = 100*sqrt(s.*(s-a).*(s-b).*(s-c));
     end
-  
+
    
    
    %% Vocalization response by correlations
-   [T.VocResp.Corrs, Data.Corrs] = calcRespMaps(ImageSize, Parameters, 'Corrs', R, VocStartFrame);
+   [T.VocResp.Corrs, Data.Corrs] = calcRespMaps(ImageSize, Parameters, 'Corrs', R, VocStartFrame, '0');
    %% Vocalization response by Realization
-   [T.VocResp.Reals, Data.Reals] = calcRespMaps(ImageSize, Parameters, 'Reals', R, VocStartFrame);
+   [T.VocResp.Reals, Data.Reals] = calcRespMaps(ImageSize, Parameters, 'Reals', R, VocStartFrame, '0');
    %% Vocalization response by Variance
-   [T.VocResp.Vars, Data.Vars] = calcRespMaps(ImageSize, Parameters, 'Vars', R, VocStartFrame);
+   [T.VocResp.Vars, Data.Vars] = calcRespMaps(ImageSize, Parameters, 'Vars', R, VocStartFrame, '0');
    %% Vocalization response by Vocalization Frequency
-   [T.VocResp.VocFreqs, Data.VocFreqs] = calcRespMaps(ImageSize, Parameters, 'VocFreqs', R, VocStartFrame);
+   [T.VocResp.VocFreqs, Data.VocFreqs] = calcRespMaps(ImageSize, Parameters, 'VocFreqs', R, VocStartFrame, '0');
+   %% Vocalization response by Vocalization Frequency without texture
+   [T.VocResp.VocFreqsSil, Data.VocFreqsSil] = calcRespMaps(ImageSize, Parameters, 'VocFreqs', R, VocStartFrame, '1');
    %% Summary picture
    
    % Maximum Texture Response
