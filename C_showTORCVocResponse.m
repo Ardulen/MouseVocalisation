@@ -21,10 +21,10 @@ classdef C_showTORCVocResponse < handle
     SelP = 'Full';
     Legend = {};
     Vid = {};
-    AxNum = 10;
+    AxNum = 8;
     TuningR = [];
-    Xoffset = 0.25;
-    Yoffset = 0.15;
+    Xoffset = 0.20;
+    Yoffset = 0.25;
     Toffset = 0.25;
   end
   
@@ -39,6 +39,7 @@ classdef C_showTORCVocResponse < handle
         checkField(P, 'Source', 'VideoCalcium');
         checkField(P, 'FR', 100);
         checkField(P, 'CranMask', 1);
+        checkField(P, 'WindowSize', 5);
 
         O.NTrials = size(R.Frames.AvgTime,4);
         O.ImageSize = size(R.Frames.AverageRaw);
@@ -53,8 +54,13 @@ classdef C_showTORCVocResponse < handle
         O.Vid.CurrentTime = 0.5;
         O.Vid.PreTime = 1;
         O.Vid.Caxis = 0;
-        O.Vid.Clims = O.GetClims(100*O.T.Data.Full(:, :, 180:500, 1), [99.9, 5]);%[min(100*O.T.Data.Full(:, :, 180:500, 1), [], 'all'), max(100*O.T.Data.Full(:, :, 180:500, 1), [], 'all')];
-        O.updateLegend({'Tex + Pretme ', 'Sil + Pretime '});   
+        O.Vid.Clims = O.GetClims(100*O.T.Data.Full(:, :, 180:500, 1), [99.9, 5]);%[min(100*O.T.Data.Full(:, :, 180:500, 1), [], 'all'), max(100*O.T.Data.Full(:, :, 180:500, 1), [], 'all')];   
+        O.Legend = {'Tex + PreTime 0.5', 'Tex + PreTime 1', 'Tex + PreTime 3', 'BaseLine: Tex + PreTime 5 Moving Median Window 5 frames', 'Sil + Pretime 0.5', 'BaseLine Sil Pretime 0.5', 'Sil + Pretime 1', 'BaseLine Sil + Pretime 1', 'Sil + PreTime 3', 'BaseLine Sil + Pretime 3'};
+        %% pixels to mm transformation  
+        [X, Y, PixelPerMM] = C_pixelToMM(P,R,R.Frames);
+        O.PixelPerMM = PixelPerMM;
+        O.X = X; O.Y = Y;
+        
         %% Set Cortex Area map
         [~, ~, ~, ~, O.TuningR] = C_showCortexRegionsTuningWF('Animal', O.P.Animal, 'FIG', 0);
 
@@ -71,15 +77,12 @@ classdef C_showTORCVocResponse < handle
         
         
         
-        O.createAxes(5, 2);
+        O.createAxes(4, 2);
         [~, O.GUI.AH(31)] = axesDivide(1,1,[0.04, 0.1, 0.7, 0.2],[],0.3,'c');
         annotation('textbox','String', O.FigureName,'Position',[0.3,0.96,0.7,0.05],'Horiz','l','FontSize',12,'FontW','b','EdgeColor',[1,1,1]);
         
 
-        %% pixels to mm transformation  
-        [X, Y, PixelPerMM] = C_pixelToMM(P,R,R.Frames);
-        O.PixelPerMM = PixelPerMM;
-        O.X = X; O.Y = Y;
+
 
         %% Time Points
         O.Time=R.Frames.TimeAvg;
@@ -99,8 +102,10 @@ classdef C_showTORCVocResponse < handle
         O.createButtons;
         
         
-        O.T.SilVocAvg = mean(O.T.VocResp.Sil(:, :, :, 1), 3);
-        O.T.FullVocAvg = mean(O.T.VocResp.PreTime(:, :, :, 1), 3);
+        O.T.SilVocAvg = mean(O.T.VocResp.Sil, 3);
+        O.T.FullVocAvg = mean(O.T.VocResp.PreTime, 3);
+        O.T.OffsetSilAvg = mean(O.T.VocResp.OffsetSil, 3);
+        O.T.OffsetAvg = mean(O.T.OffsetResp, 3);
         FirstTrialVocResp = zeros([O.ImageSize(1), O.ImageSize(2), 390, 10]);
         FirstTrialVocRespSil = zeros([O.ImageSize(1), O.ImageSize(2), 390, 10]);
         LastTrialVocResp = zeros([O.ImageSize(1), O.ImageSize(2), 390, 10]);
@@ -129,9 +134,9 @@ classdef C_showTORCVocResponse < handle
 
         cAH = O.GUI.AH(31);
         set(cAH,'ButtonDownFcn',{@O.selectTime});
-        O.ROIAvgImage = zeros(length(O.Time), 8);
+        O.ROIAvgImage = zeros(length(O.Time), 10);
         hold(cAH, 'on');
-        for j =1:8
+        for j =1:10
             O.GUI.ROIAverage(j) = plot(cAH, O.Time, 100*O.ROIAvgImage(:, j), 'Linewidth', 1.5, 'Visible', 'off');
         end
         for j = 1:4
@@ -156,7 +161,7 @@ classdef C_showTORCVocResponse < handle
 
         O.plotSilMaps;
         O.plotTimePoint;
-        for i =1:10
+        for i =1:8
             O.GUI.Circle.left(i) = O.redrawCircle(i, 'm');
         end
         O.ROIMask = O.findROIMask;
@@ -175,7 +180,7 @@ classdef C_showTORCVocResponse < handle
         
         function InitParTab(O, Yax, Leg, SelP, AxNum, Clims)
             O.AxNum = AxNum;           
-            O.createAxes(5, Yax)
+            O.createAxes(4, Yax)
             O.updateLegend(Leg);
             O.SelP = SelP;
             O.plotParMaps(SelP, Clims);
@@ -185,8 +190,8 @@ classdef C_showTORCVocResponse < handle
         function plotParMaps(O, Par, Clims)
             Clims = O.GetClims(O.T.VocResp.(Par), Clims);
             for j = 1:length(O.T.Parameters.(Par))
-               for i = 1:4
-                    O.plotMaps(Par, O.T.VocResp.(Par)(:, :, (j-1)*4+i), 'Change Norm (%)',  Clims, O.LineColors(i, :), (j-1)*5+i, O.Legend{(j-1)*4+i}, 'jet')
+               for i = 1:length(O.T.Parameters.PreTimes)-1
+                    O.plotMaps(Par, O.T.VocResp.(Par)(:, :, (j-1)*(length(O.T.Parameters.PreTimes)-1)+i), 'Area under graph',  Clims, O.LineColors(i, :), (j-1)*4+i, O.Legend{(j-1)*4+i}, 'jet')
                end
             end
         end    
@@ -196,9 +201,9 @@ classdef C_showTORCVocResponse < handle
             % with and without Texture
             ClimsFull = O.GetClims(O.T.VocResp.PreTime(:, :, :, 1), [95, 5]);
             ClimsSil = O.GetClims(O.T.VocResp.Sil(:, :, :, 1), [95, 5]);
-            for i = 1:4
-                O.plotMaps('Full', O.T.VocResp.PreTime(:, :, i, 1), 'Change norm (%)', ClimsFull, O.LineColors(i, :), i, O.Legend{i}, 'jet')
-                O.plotMaps('Sil', O.T.VocResp.Sil(:, :, i, 1), 'Change norm (%)', ClimsSil, O.LineColors(i, :), i+5, O.Legend{i+4}, 'jet');
+            for i = 1:length(O.T.Parameters.PreTimes)-1
+                O.plotMaps('Full', O.T.VocResp.PreTime(:, :, i), 'Area under Graph', ClimsFull, O.LineColors(i, :), i, O.Legend{i}, 'jet')
+                O.plotMaps('Sil', O.T.VocResp.Sil(:, :, i), 'Area under Graph', ClimsSil, O.LineColors(i, :), i+length(O.T.Parameters.PreTimes), O.Legend{(i-0.5)*2+4}, 'jet');
             end
         end 
         
@@ -206,25 +211,29 @@ classdef C_showTORCVocResponse < handle
             Clims = O.GetClims(O.T.TexResp, [95, 5]);
             O.plotMaps("TexResp", O.T.TexResp, 'Change Norm (%)', Clims, O.LineColors(1, :), 1, 'Texture Response', 'jet');
             Clims = O.GetClims(O.T.FullVocAvg, [95, 5]);
-            O.plotMaps('AvgVocResp', O.T.FullVocAvg, 'Change Norm (%)', Clims, 'k', 2, 'Texture Voc Resp', 'jet')
+            O.plotMaps('AvgVocResp', O.T.FullVocAvg, 'Area of peak', Clims, 'k', 2, 'Texture Voc resp', 'jet')
             Clims = O.GetClims(O.T.SilVocAvg, [95, 5]);
-            O.plotMaps('AvgVocResp', O.T.SilVocAvg, 'Change Norm (%)', Clims, 'k', 3, 'Silent Voc Resp', 'jet')
+            O.plotMaps('AvgVocResp', O.T.SilVocAvg, 'Area under peak', Clims, 'k', 3, 'Silent Voc resp', 'jet')
             Clims = O.GetClims(O.T.SusLvl, [95, 5]);
             O.plotMaps("SusLvl", O.T.SusLvl, 'Change Norm (%)', Clims, O.LineColors(2, :), 4, 'Sustained Level', 'jet');
             Clims = O.GetClims(O.T.FitDecMap, [95, 5]);
-            O.plotMaps("SusLvl", O.T.FitDecMap, 'Tau', Clims, O.LineColors(2, :), 5, 'Decay constant', 'jet');
-            
+            O.plotMaps("FitDec", O.T.FitDecMap, 'Tau', Clims, O.LineColors(2, :), 5, 'Decay constant', 'jet');
+            Clims = O.GetClims(O.T.OffsetSilAvg, [95, 5]);
+            O.plotMaps("OffSetSilAvg", O.T.OffsetSilAvg, 'Avg Area of peak', Clims, 'k', 6, 'Voc offset resp', 'jet');
+            Clims = O.GetClims(O.T.OffsetAvg, [95, 5]);
+            O.plotMaps("OffSetAvg", O.T.OffsetAvg, 'Avg Area of peak', Clims, 'k', 7, 'Tex+Voc offset resp', 'jet');
+
         end
         
         function plotTimePoint(O)
-            for i = 1:size(O.T.Data.(O.SelP), 4)/4
+            for i = 1:size(O.T.Data.(O.SelP), 4)/length(O.T.Parameters.PreTimes)
                 MapData = 100*O.T.Data.(O.SelP)(:, :, round((O.Vid.CurrentTime+2)*O.P.FR), round((i-1)*4+O.Vid.PreTime));
                 if O.Vid.Caxis
                     Clims = O.GetClims(MapData, [95, 5]);
                 else
                     Clims = O.Vid.Clims;
                 end
-                O.plotMaps('TimePoint', MapData, ' ', Clims, 'k', 5+5*(i-1), ['Pretime', num2str(O.T.Parameters.PreTimes(O.Vid.PreTime)),' @ ',num2str(O.Vid.CurrentTime,2),'s'], 'bone')
+                O.plotMaps(['TimePoint', num2str(i)], MapData, ' ', Clims, 'k', 4+4*(i-1), ['Pretime', num2str(O.T.Parameters.PreTimes(O.Vid.PreTime)),' @ ',num2str(O.Vid.CurrentTime,2),'s'], 'bone')
             end
         end
         
@@ -240,6 +249,8 @@ classdef C_showTORCVocResponse < handle
                 end
                 colorbar(cAH, 'Visible', 'off')
                 set(cAH,'YDir','reverse','DataAspectRatio',[1,1,1])
+                ylim(cAH, [min(O.Y), max(O.Y)]);
+                xlim(cAH, [min(O.X), max(O.X)]);
             end   
         end
         
@@ -333,9 +344,10 @@ classdef C_showTORCVocResponse < handle
             %Updates legend when the parameter to compare is switched
             O.Legend = {};
             for j = 1:length(LegTex)
-                for i= 1:4
+                for i= 1:length(O.T.Parameters.PreTimes)-1
                     O.Legend = [O.Legend, strcat(LegTex(j), num2str(O.T.Parameters.PreTimes(i)))];
                 end
+                O.Legend = [O.Legend, strcat(LegTex(j), num2str(O.T.Parameters.PreTimes(i+1)), ' Moving Median, WindowSize:', num2str(O.P.WindowSize), ' frames')];
             end
         end
         
@@ -344,17 +356,25 @@ classdef C_showTORCVocResponse < handle
             FLAvgImage = squeeze(nanmean(nanmean(ROIFL,2),1));
             ROIAverageYLims  = [min(100*FLAvgImage, [], 'all')*1.1,...
                                 max(100*FLAvgImage, [], 'all')*1.1];
-            axes(O.GUI.AH(11));
+            axes(O.GUI.AH(15));
             for i = 1:size(O.T.FLAvg, 4)
                 PlotVis = O.GUI.FLAverage(i).Visible;
                 delete(O.GUI.FLAverage(i));
                 O.GUI.FLAverage(i) = plot(O.Time(1:390)-1, 100*FLAvgImage(:, i)', 'Color', O.LineColors(i, :), 'LineWidth', 1.5, 'Visible', PlotVis);
             end
-            O.GUI.AH(11).YLim=[ROIAverageYLims(1),ROIAverageYLims(2)];
-            O.GUI.AH(11).XLim = [-0.5, 2.5];
+            O.GUI.AH(15).YLim=[ROIAverageYLims(1),ROIAverageYLims(2)];
+            O.GUI.AH(15).XLim = [-0.5, 2.5];
             lgd = legend({'First 10 Texture Trials', 'Last 10 Texture Trials', 'First 10 Silent Trials', 'Last 10 Silent Trials'}, 'Position', [0.8, 0.35, 0.1, 0.1], 'ItemHitFcn', @O.legendClickCallback);
             lgd.FontSize = 6;
 
+        end
+        
+        function updateTimePlots(O)
+            for i = 1:size(O.T.Data.(O.SelP), 4)/length(O.T.Parameters.PreTimes)
+                MapData = 100*O.T.Data.(O.SelP)(:, :, round((O.Vid.CurrentTime+2)*O.P.FR), round((i-1)*4+O.Vid.PreTime));
+                TimePoint = ['O.GUI.TimePoint', num2str(i)];
+                set(eval(TimePoint), 'CData', MapData')
+            end
         end
         
         function selectTime(O,H,E)
@@ -371,13 +391,13 @@ classdef C_showTORCVocResponse < handle
         function nextTimeStep(O, ~, ~)
           O.Vid.CurrentTime = O.Time(dsearchn(O.Time,O.Vid.CurrentTime)+1);
           O.GUI.TimeIndicator.XData = repmat(O.Vid.CurrentTime,1,2);
-          O.plotTimePoint;
+          O.updateTimePlots;
         end
 
         function prevTimeStep(O, ~, ~)
           O.Vid.CurrentTime = O.Time(dsearchn(O.Time,O.Vid.CurrentTime)-1);
           O.GUI.TimeIndicator.XData = repmat(O.Vid.CurrentTime,1,2);
-          O.plotTimePoint;
+          O.updateTimePlots;
         end
 
         function MapsdropdownCallback(O, hObject, ~)
@@ -396,41 +416,41 @@ classdef C_showTORCVocResponse < handle
         end   
         if strcmp(O.SelP, 'Summary')
             O.GUI.TimeIndicator = plot(O.GUI.AH(31), [O.Vid.CurrentTime,O.Vid.CurrentTime],[-1000,1000],'-','Color','r', 'HandleVisibility', 'off');
-            delete(O.GUI.AH(11));
+            delete(O.GUI.AH(15));
             set(O.GUI.AH(31), 'HitTest', 'on');
             set(O.GUI.AH(31),'ButtonDownFcn',{@O.selectTime});
             O.GUI.AH(31).XLim = [-1, 8];
         end
         if strcmp(selectedOption, 'Tex vs Sil')
-            O.AxNum = 10;
-            O.createAxes(5, 2)
-            O.updateLegend({'Tex Pretime ', 'Sil Pretime '});
+            O.AxNum = 8;
+            O.createAxes(4, 2)
+            O.Legend = {'Tex + PreTime 0.5', 'Tex + PreTime 1', 'Tex + PreTime 3', 'BaseLine: Tex + PreTime 5 Moving Median Window 5 frames', 'Sil + Pretime 0.5', 'BaseLine Sil Pretime 0.5', 'Sil + Pretime 1', 'BaseLine Sil + Pretime 1', 'Sil + PreTime 3', 'BaseLine Sil + Pretime 3'};
             O.SelP = 'Full';
             O.plotSilMaps;
             O.plotTimePoint
         elseif strcmp(selectedOption, 'Correlations')
             Leg = {'HighCFC Pretime ', 'LowCFC Pretime '};
-            O.InitParTab(2, Leg, 'Corrs', 10, [95, 5]);
+            O.InitParTab(2, Leg, 'Corrs', 8, [95, 5]);
         elseif strcmp(selectedOption, 'Variances')
             for i = 1:length(O.T.Parameters.VocFreqs)
                 Leg{i} = ['Var ', num2str(O.T.Parameters.Vars(i)), ' Pretime '];
             end  
-            O.InitParTab(3, Leg, 'Vars', 15, [95, 5]);
+            O.InitParTab(3, Leg, 'Vars', 12, [95, 5]);
         elseif strcmp(selectedOption, 'Realizations')
             Leg = {'Real 1 Pretime ', 'Real 2 Pretime ', 'Real 3 Pretime '};
-            O.InitParTab(3, Leg, 'Reals', 15, [95, 5]);
+            O.InitParTab(3, Leg, 'Reals', 12, [95, 5]);
         elseif strcmp(selectedOption, 'Vocalization Frequency')
             for i = 1:length(O.T.Parameters.VocFreqs)
                 Leg{i} = ['Freq ', num2str(O.T.Parameters.VocFreqs(i)), ' Pretime '];
             end  
-            O.InitParTab(3, Leg, 'VocFreqs', 15, [95, 5]);
+            O.InitParTab(3, Leg, 'VocFreqs', 12, [95, 5]);
         elseif strcmp(selectedOption, 'VocFreqs Silent')
             for i = 1:length(O.T.Parameters.VocFreqs)
                 Leg{i} = ['Freq ', num2str(O.T.Parameters.VocFreqs(i)), ' Pretime '];
             end  
-            O.InitParTab(3, Leg, 'VocFreqsSil', 15, [95, 5]);
+            O.InitParTab(3, Leg, 'VocFreqsSil', 12, [95, 5]);
         elseif strcmp(selectedOption, 'Summary')
-            O.AxNum = 5;
+            O.AxNum = 7;
             O.Legend = {'Texture all Pretimes', 'Texture Pretime 3 and 5'};
             delete(O.GUI.TimeIndicator);
             set(O.GUI.AH(31), 'HitTest', 'off');
@@ -444,29 +464,32 @@ classdef C_showTORCVocResponse < handle
                 O.GUI.Buttons.(Buttons{i}).Visible = 'off';
             end
             for i =1:2    
-                O.GUI.AH((i-1)*5+1)=axes('position',[-0.01,0.69,0.21,0.21]);
-                O.GUI.AH((i-1)*5+2)=axes('position',[0.200,0.69,0.21,0.21]);
-                O.GUI.AH((i-1)*5+3)=axes('position',[0.410,0.69,0.21,0.21]);
-                O.GUI.AH((i-1)*5+4)=axes('position',[-0.01,0.37,0.21,0.21]);
-                O.GUI.AH((i-1)*5+5)=axes('position',[0.200,0.37,0.21,0.21]);
+                O.GUI.AH((i-1)*7+1)=axes('position',[-0.01,0.69,0.21,0.21]);
+                O.GUI.AH((i-1)*7+2)=axes('position',[0.200,0.69,0.21,0.21]);
+                O.GUI.AH((i-1)*7+3)=axes('position',[0.410,0.69,0.21,0.21]);
+                O.GUI.AH((i-1)*7+4)=axes('position',[-0.01,0.37,0.21,0.21]);
+                O.GUI.AH((i-1)*7+5)=axes('position',[0.200,0.37,0.21,0.21]);
+                O.GUI.AH((i-1)*7+6)=axes('position',[0.620,0.69,0.21,0.21]);
+                O.GUI.AH((i-1)*7+7)=axes('position',[0.830,0.69,0.21,0.21]);
+
             end
-            for i = 6:10
+            for i = 8:14
                 set(O.GUI.AH(i), 'Visible', 'off', 'HitTest', 'off');
             end    
-            O.GUI.AH(11)=axes('position',[0.410,0.37,0.30,0.2]);
+            O.GUI.AH(15)=axes('position',[0.410,0.37,0.30,0.2]);
             O.plotAreas;
             O.SelP = 'Summary';
             FLAvgImage = zeros(300, 4);
-            hold(O.GUI.AH(11), 'on');
+            hold(O.GUI.AH(15), 'on');
             for i = 1:size(O.T.FLAvg, 4)
-                O.GUI.FLAverage(i) = plot(O.GUI.AH(11), 100*FLAvgImage(:, i));
+                O.GUI.FLAverage(i) = plot(O.GUI.AH(15), 100*FLAvgImage(:, i));
             end
             for i = 1:10
                 % Calculate the x-coordinate of the center of each rectangle
                 xCenter = 0.2*(i-1);
 
                 % Use the rectangle function to create each rectangle with specified alpha value
-                O.GUI.FLVocStims(i) = rectangle(O.GUI.AH(11), 'Position', [xCenter, -10, 0.1, 20], 'FaceColor', 'g', 'EdgeColor', 'none', 'HandleVisibility', 'off');
+                O.GUI.FLVocStims(i) = rectangle(O.GUI.AH(15), 'Position', [xCenter, -10, 0.1, 20], 'FaceColor', 'g', 'EdgeColor', 'none', 'HandleVisibility', 'off');
             end
             O.plotSumMaps;
             O.updateFLAverages
@@ -496,21 +519,21 @@ classdef C_showTORCVocResponse < handle
         end
         
         function createButtons(O)
-            for i = 1:4
+            for i = 1:3
                 O.GUI.Buttons.(['VocStimButton', num2str(i)]) = uicontrol('Style', 'togglebutton', 'BackgroundColor', 'g', 'String', 'Stims','FontSize', 6, ...
-                                        'Position', [40 + (i-1) * 265, 175, 100, 15]);
+                                        'Position', [60 + (i-1) * 337, 185, 100, 15]);
                 O.GUI.Buttons.(['VocStimButton', num2str(i)]).Callback = {@O.toggleVocStims, i};
             end
 
             O.GUI.Buttons.CaxisButton = uicontrol('Style', 'togglebutton', 'String', 'Caxis','FontSize', 6 ,...
-                                        'Position', [1150, 175, 70, 15]);
+                                        'Position', [1115, 185, 70, 15]);
             O.GUI.Buttons.CaxisButton.Callback = {@O.toggleCaxis};
 
             O.GUI.Buttons.PrevTimeStepButton = uicontrol('Style', 'pushbutton', 'String', '⬅', 'FontSize', 6,...
-                                        'Position', [1090, 175, 25, 15]);
+                                        'Position', [1055, 185, 25, 15]);
             O.GUI.Buttons.PrevTimeStepButton.Callback = {@O.prevTimeStep};
             O.GUI.Buttons.NextTimeStepButton = uicontrol('Style', 'pushbutton', 'String', '➡', 'FontSize', 6,...
-                                        'Position', [1120, 175, 25, 15]);
+                                        'Position', [1085, 185, 25, 15]);
             O.GUI.Buttons.NextTimeStepButton.Callback = {@O.nextTimeStep};
         end
         

@@ -5,7 +5,7 @@ function plotCleanUpMeth(R, varargin)
     checkField(P, 'FIG', 1)
     checkField(P, 'FilterOrder', 1)
     checkField(P, 'CutoffFreq', 1)
-    checkField(P, 'WindowSize', 20)
+    checkField(P, 'WindowSize', 30)
     checkField(P, 'Corrs', 0.8)
     checkField(P, 'Vars', 0.4)
     %% Time Points
@@ -51,9 +51,12 @@ function plotCleanUpMeth(R, varargin)
     end
     TrialDat = squeeze(R.Frames.AvgTime(P.Pixel(2), P.Pixel(1), :, TrialNums));
     AvgDat = 100*mean(TrialDat, 2);
+    MedDat = 100*median(TrialDat, 2);
     SEM  = 2*nanstd(TrialDat,[],2)/sqrt(size(TrialDat,2));
     axes(AH(1));
     errorhull(Time, AvgDat, 100*SEM, 'LineWidth',1.5)
+    hold 'on'
+    plot(AH(1), Time, MedDat, 'LineWidth', 1.5, 'Color', 'k')
     YLims = [min(AvgDat)*1.1, max(AvgDat)*1.1];
     ylim(YLims)
     
@@ -71,13 +74,11 @@ function plotCleanUpMeth(R, varargin)
     FreqFil2 = plot(cAH, Time, FiltAvgDat, 'LineWidth', 2);
     
     %% add moving median
-    MovMed = medfilt1(Data, P.WindowSize);
-    AvgMovMed = medfilt1(AvgDat, P.WindowSize);
-%     cAH = AH(1);
-%     MovMed1 = plot(cAH, Time, MovMed, 'LineWidth', 2, 'Color', [1, 0, 0]);
-%     title(cAH, ['Trial ', num2str(P.Trial), ' Texture: ', R.General.Paradigm.Trials(P.Trial).Stimulus.ParSequence.BaseTexture])
+    MovMed = medfilt1(AvgDat, P.WindowSize);
     cAH = AH(1);
-    MovMed2 = plot(cAH, Time, AvgMovMed, 'LineWidth', 2, 'Color', [1, 0, 0]);
+    MovMed1 = plot(cAH, Time, MovMed, 'LineWidth', 2, 'Color', [1, 0, 0]);
+%     title(cAH, ['Trial ', num2str(P.Trial), ' Texture: ', R.General.Paradigm.Trials(P.Trial).Stimulus.ParSequence.BaseTexture])
+
     if strcmp(R.General.Paradigm.Trials(P.Trial).Stimulus.ParSequence.BaseTexture, 'Silence')
         title(cAH, ['Avg over all Silence Texs with Pretime ', num2str(PreTime)])
     else    
@@ -122,8 +123,11 @@ function plotCleanUpMeth(R, varargin)
         TrialNums = GetTrialNums(P.Corrs, P.Vars, [1, 2, 3], R.General, 0, R.General.Paradigm.Trial, PreTimesToAvg, R.General.Paradigm.Stimulus.Parameters.VocalFrequencies.Value);
         TrialDat = squeeze(R.Frames.AvgTime(P.Pixel(2), P.Pixel(1), :, TrialNums));
         AvgDat = 100*mean(TrialDat, 2);
+        MedDat = 100*median(TrialDat, 2);
+        AvgMovMed = medfilt1(AvgDat, P.WindowSize);
+        plot(AH(1), Time, AvgMovMed, 'LineWidth', 2, 'Color', [1, 0, 0]);
         plot(AH(1), Time, AvgDat, 'LineWidth', 1.5, 'Color', 'm')
-
+        plot(AH(1), Time, MedDat, 'LineWidth', 1.5, 'Color', 'y')
     
         % different Realizations seperated
         LineColors = [0, 0.4470, 0.7410; 0.8500, 0.3250, 0.0980; 0.9290, 0.6940, 0.1250];
@@ -132,32 +136,35 @@ function plotCleanUpMeth(R, varargin)
             TrialNums = GetTrialNums(P.Corrs, P.Vars, i, R.General, 0, R.General.Paradigm.Trial, PreTime, R.General.Paradigm.Stimulus.Parameters.VocalFrequencies.Value);
             TrialDat = squeeze(R.Frames.AvgTime(P.Pixel(2), P.Pixel(1), :, TrialNums));
             AvgDat = 100*mean(TrialDat, 2);
+            MedDat = 100*median(TrialDat, 2);
             SEM  = 2*nanstd(TrialDat,[],2)/sqrt(size(TrialDat,2));
             errorhull(Time, AvgDat, 100*SEM, 'LineWidth',1.5, 'Color', LineColors(i, :))
             hold on;
+            plot(Time, MedDat, 'LineWidth', 1.5, 'Color', LineColors(i, :), 'LineStyle', '--')
             ylim(YLims)
             TrialNums = GetTrialNums(P.Corrs, P.Vars, i, R.General, 0, R.General.Paradigm.Trial, PreTimesToAvg, R.General.Paradigm.Stimulus.Parameters.VocalFrequencies.Value);
             TrialDat = squeeze(R.Frames.AvgTime(P.Pixel(2), P.Pixel(1), :, TrialNums));
             AvgDat = 100*mean(TrialDat, 2);
+            MedDat = 100*median(TrialDat, 2);
             plot(Time, AvgDat, 'LineWidth', 1.5, 'Color', LineColors(i, :), 'LineStyle', ':')
-
+            plot(Time, MedDat, 'LineWidth', 1.5, 'Color', LineColors(i, :), 'LineStyle', '-.')
         end
-        % legends
-        %lgd(1) = legend(AH(1), ['ButterWorth filter: order ', num2str(order),', cutoff ', num2str(fc), ' hz'], ['Movingmedian: WindowSize ', num2str(P.WindowSize)], ['Selected minima'], 'Interpolated selected minima', 'FontSize', 6);
-        lgd(1) = legend(AH(1), 'SEM', 'Average', ['ButterWorth filter: order ', num2str(order),', cutoff ', num2str(fc), ' hz'], ['Movingmedian: WindowSize ', num2str(P.WindowSize)], 'Selected minima', 'Interpolated selected minima', 'Texture Average', 'FontSize', 6);
-        Leg = {};
-        for i = 1:3
-            Leg = [Leg, {['SEM Realization ', num2str(i)], ['Average Realization', num2str(i)], ['Texture Average Realization ', num2str(i)]}];
-        end
-        lgd(2) = legend(AH(2), Leg, 'FontSize', 6);
-
-        %% visibility
-        for i = 1:2
-            set(lgd(i), 'ItemHitFcn', @(src, event) toggleVisibility(event));
-        end
-        % Function to toggle the visibility of the clicked line
 
     end
+    %% legends
+    %lgd(1) = legend(AH(1), ['ButterWorth filter: order ', num2str(order),', cutoff ', num2str(fc), ' hz'], ['Movingmedian: WindowSize ', num2str(P.WindowSize)], ['Selected minima'], 'Interpolated selected minima', 'FontSize', 6);
+    lgd(1) = legend(AH(1), 'SEM', 'Average Tex+Voc', 'median Tex+Voc', ['ButterWorth filter: order ', num2str(order),', cutoff ', num2str(fc), ' hz'],'Selected minima', 'Interpolated selected minima', ['Movingmedian: WindowSize ', num2str(P.WindowSize)], 'Average Tex', 'Median Tex', 'FontSize', 5);
+    Leg = {};
+    for i = 1:3
+        Leg = [Leg, {['SEM Realization ', num2str(i)], ['Average Tex+Voc Realization', num2str(i)], ['Median Tex+Voc Realization ', num2str(i)], ['Average Tex Realization ', num2str(i)], ['median Tex Realization ', num2str(i)]}];
+    end
+    lgd(2) = legend(AH(2), Leg, 'FontSize', 5);
+
+    %% visibility
+    for i = 1:2
+        set(lgd(i), 'ItemHitFcn', @(src, event) toggleVisibility(event));
+    end
+    % Function to toggle the visibility of the clicked line
     function toggleVisibility(event)
         % Toggle the visibility of the corresponding plot
         if strcmpi(event.Peer.Visible, 'on')
