@@ -39,18 +39,24 @@ checkField(P, 'WindowSize', 5);
     end   
     Data.Full(:, :, :, i+1) = AvgMovMed;
     
-    Data.OffsetResp = zeros([ImageSize, length(Time), (length(Parameters.PreTimes)-1)*2]);
-    T.OffsetResp = zeros([ImageSize, length(Parameters.PreTimes)-1]);
-    AvgMovMed = zeros([ImageSize, size(R.Frames.AvgTime, 3)]);
-    for i =1:2:(length(Parameters.PreTimes)-1)*2
-       oddindex = i/2+0.5;
-       FunCal = {Parameters.Corrs, Parameters.Vars, Parameters.Reals, R.General, 0, Parameters.NTrials, Parameters.PreTimes(oddindex), Parameters.VocFreqs};
-       VocStartFrame(oddindex) = (2+Parameters.PreTimes(oddindex))*P.FR;
-       TrialNums = GetTrialNums(Parameters.Corrs, Parameters.Vars, Parameters.Reals, R.General, 0, Parameters.NTrials, Parameters.PreTimes(oddindex), Parameters.VocFreqs);
-       TexBaseline = squeeze(mean(R.Frames.AvgTime(:, :, :, TrialNums), 4));
-       [AvgMovMed, T.OffsetResp, Data.OffsetResp(:, :, :, i)] = calcPeakSize(AvgMovMed, T.OffsetResp, FunCal, ImageSize, VocStartFrame(oddindex), TexBaseline, 50, oddindex, R);              
-       Data.OffsetResp(:, :, :, i+1) = AvgMovMed;
-    end   
+        %% further subdivision by variance and realizations
+%         Data.CorrsVarsReals = zeros([ImageSize, length(Time), length(Parameters.PreTimes), length(Parameters.Corrs), length(Parameters.Vars), length(Parameters.Reals)]);
+%         T.VocResp.CorrsVarsReals = zeros([ImageSize, length(Time), length(Parameters.PreTimes), length(Parameters.Corrs), length(Parameters.Vars), length(Parameters.Reals)]);
+%         for j = 1:length(Parameters.Corrs)
+%             for k = 1:length(Parameters.Vars)
+%                 for q = 1:length(Parameters.Reals)
+%                     TrialNums = GetTrialNums(Parameters.Corrs(j), Parameters.Vars(k), Parameters.Reals(q), R.General, 0, Parameters.NTrials, Parameters.PreTimes(end), Parameters.VocFreqs);
+%                     TexBaseline = squeeze(mean(R.Frames.AvgTime(:, :, :, TrialNums), 4));
+%                     AvgMovMed = zeros([ImageSize, size(R.Frames.AvgTime, 3)]);
+%                     for i =1:length(Parameters.PreTimes)-1
+%                         FunCal = {Parameters.Corrs(j), Parameters.Vars(k), Parameters.Reals(q), R.General, 0, Parameters.NTrials, Parameters.PreTimes(i), Parameters.VocFreqs};
+%                         VocStartFrame(i) = (2+Parameters.PreTimes(i))*P.FR;
+%                         [AvgMovMed, T.VocResp.CorrsVarsReals(:, :, j, k, q, i), Data.CorrsVarsReals(:, :, :, j, k, q, i)] = calcPeakSize(AvgMovMed, T.VocResp.PreTime, FunCal, ImageSize, VocStartFrame(i), TexBaseline, P.WindowSize, i, R);              
+%                     end   
+%                     Data.CorrsVarsReals(:, :, :, j, k, q, i+1) = AvgMovMed;
+%                 end
+%             end
+%         end
     
     [T.VocResp.Sil, Data.Full(:, :, :, 5:10)] = calcRespMaps(ImageSize, Parameters, 'Par', R, VocStartFrame, 1, 50, 0);
 
@@ -85,6 +91,7 @@ checkField(P, 'WindowSize', 5);
    %% Vocalization response by correlations
    fprintf('\nCalulcating vocalization reponse by correlation') 
    [T.VocResp.Corrs, Data.Corrs] = calcRespMaps(ImageSize, Parameters, 'Corrs', R, VocStartFrame, '0', P.WindowSize, 0);
+
    %% Vocalization response by Realization
    fprintf('\nCalulcating vocalization reponse by Realization')
    [T.VocResp.Reals, Data.Reals] = calcRespMaps(ImageSize, Parameters, 'Reals', R, VocStartFrame, '0', P.WindowSize, 0);
@@ -116,7 +123,18 @@ checkField(P, 'WindowSize', 5);
 
    % sound offset response
    
-
+    Data.OffsetResp = zeros([ImageSize, length(Time), (length(Parameters.PreTimes)-1)*2]);
+    T.OffsetResp = zeros([ImageSize, length(Parameters.PreTimes)-1]);
+    AvgMovMed = zeros([ImageSize, size(R.Frames.AvgTime, 3)]);
+    for i =1:2:(length(Parameters.PreTimes)-1)*2
+       oddindex = i/2+0.5;
+       FunCal = {Parameters.Corrs, Parameters.Vars, Parameters.Reals, R.General, 0, Parameters.NTrials, Parameters.PreTimes(oddindex), Parameters.VocFreqs};
+       VocStartFrame(oddindex) = (2+Parameters.PreTimes(oddindex))*P.FR;
+       TrialNums = GetTrialNums(Parameters.Corrs, Parameters.Vars, Parameters.Reals, R.General, 0, Parameters.NTrials, Parameters.PreTimes(oddindex), Parameters.VocFreqs);
+       TexBaseline = squeeze(mean(R.Frames.AvgTime(:, :, :, TrialNums), 4));
+       [AvgMovMed, T.OffsetResp, Data.OffsetResp(:, :, :, i)] = calcPeakSize(AvgMovMed, T.OffsetResp, FunCal, ImageSize, VocStartFrame(oddindex), TexBaseline, 50, oddindex, R);              
+       Data.OffsetResp(:, :, :, i+1) = AvgMovMed;
+    end   
    
    
     %% Calculate decay maps
