@@ -40,7 +40,10 @@ classdef C_showTORCVocResponse < handle
         checkField(P, 'FR', 100);
         checkField(P, 'CranMask', 1);
         checkField(P, 'WindowSize', 5);
-
+        checkField(P, 'Offset', [0.20, 0.25])
+        
+        O.Xoffset = P.Offset(1);
+        O.Yoffset = P.Offset(2);
         O.NTrials = size(R.Frames.AvgTime,4);
         O.ImageSize = size(R.Frames.AverageRaw);
         O.T = T;
@@ -55,7 +58,7 @@ classdef C_showTORCVocResponse < handle
         O.Vid.PreTime = 1;
         O.Vid.Caxis = 0;
         O.Vid.Clims = O.GetClims(100*O.T.Data.Full(:, :, 180:500, 1), [99.9, 5]);%[min(100*O.T.Data.Full(:, :, 180:500, 1), [], 'all'), max(100*O.T.Data.Full(:, :, 180:500, 1), [], 'all')];   
-        O.Legend = {'Tex + PreTime 0.5', 'Tex + PreTime 1', 'Tex + PreTime 3', 'BaseLine: Tex + PreTime 5 Moving Median Window 5 frames', 'Sil + Pretime 0.5', 'BaseLine Sil Pretime 0.5', 'Sil + Pretime 1', 'BaseLine Sil + Pretime 1', 'Sil + PreTime 3', 'BaseLine Sil + Pretime 3'};
+        O.updateLegend({'Tex + PreTime ', 'Sil + PreTime '});
         %% pixels to mm transformation  
         [X, Y, PixelPerMM] = C_pixelToMM(P,R,R.Frames);
         O.PixelPerMM = PixelPerMM;
@@ -133,13 +136,17 @@ classdef C_showTORCVocResponse < handle
         %% plot ROI Traces
 
         cAH = O.GUI.AH(31);
-        set(cAH,'ButtonDownFcn',{@O.selectTime});
-        O.ROIAvgImage = zeros(length(O.Time), 10);
-        hold(cAH, 'on');
-        for j =1:10
-            O.GUI.ROIAverage(j) = plot(cAH, O.Time, 100*O.ROIAvgImage(:, j), 'Linewidth', 1.5, 'Visible', 'off');
+        set(cAH, 'ButtonDownFcn',{@O.selectTime});
+        O.ROIAvgImage = zeros(length(O.Time), 6);
+        ROISEMAvg = zeros(length(O.Time), 6);
+        axes(cAH)
+        hold on
+        for j =1:6
+            O.GUI.ROIAverage(j, :) = errorhull(O.Time, 100*O.ROIAvgImage(:, j), ROISEMAvg(:, j), 'LineWidth', 1.5, 'Visible', 'off');
+            set(O.GUI.ROIAverage(j, :),'HitTest','off');
         end
-        for j = 1:4
+        hold on
+        for j = 1:length(O.T.Parameters.PreTimes)-1
             for i = 1:10
                 % Calculate the x-coordinate of each rectangle
                 xCenter = O.T.Parameters.PreTimes(j)+0.2*(i-1);
@@ -148,11 +155,11 @@ classdef C_showTORCVocResponse < handle
                 O.GUI.VocStims(j, i) = rectangle('Position', [xCenter, -5, 0.1, 10], 'FaceColor', 'g', 'EdgeColor', 'none', 'Visible', 'off', 'HandleVisibility', 'off');
             end
         end
-        plot(cAH, [0, 0],[-1000,1000],'-','Color','k', 'HandleVisibility', 'Off');
-        xlim(cAH, [-1, 8]);
-        plot(cAH, [-3, 10],[0,0],'-','Color','k', 'HandleVisibility', 'Off');
-        O.GUI.TimeIndicator = plot([O.Vid.CurrentTime,O.Vid.CurrentTime],[-1000,1000],'-','Color','r', 'HandleVisibility', 'off');
-        set(O.GUI.ROIAverage,'HitTest','off');
+        plot([0, 0],[-100,100],'-','Color','k', 'HandleVisibility', 'Off');
+        xlim([-1, 6]);
+        plot([-3, 10],[0,0],'-','Color','k', 'HandleVisibility', 'Off');
+        O.GUI.TimeIndicator = plot([O.Vid.CurrentTime,O.Vid.CurrentTime],[-100,100],'-','Color','r', 'HandleVisibility', 'off');
+
         xlabel(cAH, 'time (s)');
         ylabel(cAH, 'Change norm. (%)');
         title(cAH, 'Averages over ROI');
@@ -191,7 +198,7 @@ classdef C_showTORCVocResponse < handle
             Clims = O.GetClims(O.T.VocResp.(Par), Clims);
             for j = 1:length(O.T.Parameters.(Par))
                for i = 1:length(O.T.Parameters.PreTimes)-1
-                    O.plotMaps(Par, O.T.VocResp.(Par)(:, :, (j-1)*(length(O.T.Parameters.PreTimes)-1)+i), 'Area under graph',  Clims, O.LineColors(i, :), (j-1)*4+i, O.Legend{(j-1)*4+i}, 'jet')
+                    O.plotMaps(Par, O.T.VocResp.(Par)(:, :, j, i), 'Area under graph',  Clims, O.LineColors(i, :), (j-1)*4+i, O.Legend{(j-1)*6+(i*2)}, 'jet')
                end
             end
         end    
@@ -202,8 +209,8 @@ classdef C_showTORCVocResponse < handle
             ClimsFull = O.GetClims(O.T.VocResp.PreTime(:, :, :, 1), [95, 5]);
             ClimsSil = O.GetClims(O.T.VocResp.Sil(:, :, :, 1), [95, 5]);
             for i = 1:length(O.T.Parameters.PreTimes)-1
-                O.plotMaps('Full', O.T.VocResp.PreTime(:, :, i), 'Area under Graph', ClimsFull, O.LineColors(i, :), i, O.Legend{i}, 'jet')
-                O.plotMaps('Sil', O.T.VocResp.Sil(:, :, i), 'Area under Graph', ClimsSil, O.LineColors(i, :), i+length(O.T.Parameters.PreTimes), O.Legend{(i-0.5)*2+4}, 'jet');
+                O.plotMaps('Full', O.T.VocResp.PreTime(:, :, i), 'Area under Graph', ClimsFull, O.LineColors(i, :), i, O.Legend{i*2}, 'jet')
+                O.plotMaps('Sil', O.T.VocResp.Sil(:, :, i), 'Area under Graph', ClimsSil, O.LineColors(i, :), i+length(O.T.Parameters.PreTimes), O.Legend{i*2+6}, 'jet');
             end
         end 
         
@@ -226,8 +233,8 @@ classdef C_showTORCVocResponse < handle
         end
         
         function plotTimePoint(O)
-            for i = 1:size(O.T.Data.(O.SelP), 4)/length(O.T.Parameters.PreTimes)
-                MapData = 100*O.T.Data.(O.SelP)(:, :, round((O.Vid.CurrentTime+2)*O.P.FR), round((i-1)*4+O.Vid.PreTime));
+            for i = 1:size(O.T.Data.(O.SelP), 4)/(length(O.T.Parameters.PreTimes)-1)
+                MapData = 100*O.T.Data.(O.SelP)(:, :, round((O.Vid.CurrentTime+2)*O.P.FR), round((i-1)*3+O.Vid.PreTime));
                 if O.Vid.Caxis
                     Clims = O.GetClims(MapData, [95, 5]);
                 else
@@ -258,14 +265,14 @@ classdef C_showTORCVocResponse < handle
             %plots a single map for given data
             cAH = O.GUI.AH(AxNum);
             hold(cAH, 'on');
-            O.GUI.(GUIDat) = imagesc(cAH, O.X, O.Y, MapData'); %[cAH, AHB, cBar] = HF_imagescCraniotomy(Fig,cAH,cAH,O.X,O.Y,Adaptmap(:, :, O.P.Pl(i)),Adaptmap(:, :, O.P.Pl(i)),R.Frames.CraniotomyMask, 'AlphaF', 1, 'AlphaB', 0); 
-            O.GUI.(GUIDat).AlphaData = O.CraniotomyMask'.*1;
+            O.GUI.(GUIDat)(AxNum) = imagesc(cAH, O.X, O.Y, MapData'); %[cAH, AHB, cBar] = HF_imagescCraniotomy(Fig,cAH,cAH,O.X,O.Y,Adaptmap(:, :, O.P.Pl(i)),Adaptmap(:, :, O.P.Pl(i)),R.Frames.CraniotomyMask, 'AlphaF', 1, 'AlphaB', 0); 
+            O.GUI.(GUIDat)(AxNum).AlphaData = O.CraniotomyMask'.*1;
             set(cAH,'YDir','reverse','DataAspectRatio',[1,1,1])
             set(cAH, 'FontSize', 5);
             set(cAH,'ButtonDownFcn',{@O.selectROI});
             colormap(cAH, ColMap)
             caxis(cAH, Clims);
-            set(O.GUI.(GUIDat),'HitTest','off');
+            set(O.GUI.(GUIDat)(AxNum),'HitTest','off');
             c1 = colorbar(cAH);
             ylabel(c1, ylab);
             %ylabel(cAH, 'Mediolateral (mm)', 'FontSize', 4); xlabel(cAH, 'Anteroposterior (mm)', 'FontSize', 4);
@@ -294,6 +301,8 @@ classdef C_showTORCVocResponse < handle
             SelType = get(O.P.FIG,'SelectionType');
             if strcmp(SelType, 'alt')
                 O.toggleAreaVis;
+            elseif strcmp(SelType, 'extend')
+                O.toggleCAxismain
             else    
                 O.P.ROI(1:2) = CP(1,1:2);
                 delete(O.GUI.ROICoords);
@@ -323,21 +332,24 @@ classdef C_showTORCVocResponse < handle
         
         function updateROIAverages(O)
             ROIAll = O.T.Data.(O.SelP).*O.ROIMask;
+            SEMAll = O.T.SEM.(O.SelP).*O.ROIMask;
             %ROIAll(ROIAll==0) = NaN; % Replace 0 entries from Mask (which cannot be set to NaN, as they are logical
             O.ROIAvgImage  = squeeze(nanmean(nanmean(ROIAll,2),1)); % Average over Image Dimensions   
             ROIAverageYLims  = [min(100*O.ROIAvgImage(1.8*O.P.FR:1:5*O.P.FR, :), [], 'all')*1.1,...
                             max(100*O.ROIAvgImage(1.8*O.P.FR:1:5*O.P.FR, :), [], 'all')*1.1];
+            ROISEMAvg = squeeze(nanmean(nanmean(SEMAll, 2), 1));
             axes(O.GUI.AH(31));
             for i = 1:size(O.T.Data.(O.SelP), 4)
-                PlotVis = O.GUI.ROIAverage(i).Visible;
-                delete(O.GUI.ROIAverage(i));
-                ColIndex = mod(i - 1, 4) + 1;
-                WidthIndex = ceil(i/4);
-                O.GUI.ROIAverage(i) = plot(O.Time-2, 100*O.ROIAvgImage(:, i)', 'Color', O.LineColors(ColIndex, :), 'LineWidth', O.LineWidths(WidthIndex), 'Visible', PlotVis);
+                PlotVis = O.GUI.ROIAverage(i, :).Visible;
+                delete(O.GUI.ROIAverage(i, :));
+                ColIndex = mod(i - 1, 3) + 1;
+                WidthIndex = ceil(i/3);
+                O.GUI.ROIAverage(i, :) = errorhull(O.Time-2, 100*O.ROIAvgImage(:, i)', 100*ROISEMAvg(:, i)', 'Color', O.LineColors(ColIndex, :), 'LineWidth', O.LineWidths(WidthIndex), 'Visible', PlotVis);
+                %O.GUI.ROIAverage(i) = plot(O.Time-2, 100*O.ROIAvgImage(:, i)', 'Color', O.LineColors(ColIndex, :), 'LineWidth', O.LineWidths(WidthIndex), 'Visible', PlotVis);
             end
             O.GUI.AH(31).YLim=[ROIAverageYLims(1),ROIAverageYLims(2)];
-            lgd = legend(O.Legend, 'Position', [0.8, 0.11, 0.1, 0.1], 'ItemHitFcn', @O.legendClickCallback);
-            lgd.FontSize = 5;
+            lgd = legend(O.Legend, 'Position', [0.8, 0.12, 0.1, 0.1], 'ItemHitFcn', @O.legendClickCallback);
+            lgd.FontSize = 3.5;
         end
         
         function updateLegend(O, LegTex)
@@ -345,9 +357,9 @@ classdef C_showTORCVocResponse < handle
             O.Legend = {};
             for j = 1:length(LegTex)
                 for i= 1:length(O.T.Parameters.PreTimes)-1
+                    O.Legend = [O.Legend, 'SEM'];
                     O.Legend = [O.Legend, strcat(LegTex(j), num2str(O.T.Parameters.PreTimes(i)))];
                 end
-                O.Legend = [O.Legend, strcat(LegTex(j), num2str(O.T.Parameters.PreTimes(i+1)), ' Moving Median, WindowSize:', num2str(O.P.WindowSize), ' frames')];
             end
         end
         
@@ -412,19 +424,21 @@ classdef C_showTORCVocResponse < handle
             delete(O.GUI.AH(i));
         end
         for i = 1:length(O.GUI.ROIAverage)
-            delete(O.GUI.ROIAverage(i));
+            delete(O.GUI.ROIAverage(i, :));
         end   
         if strcmp(O.SelP, 'Summary')
-            O.GUI.TimeIndicator = plot(O.GUI.AH(31), [O.Vid.CurrentTime,O.Vid.CurrentTime],[-1000,1000],'-','Color','r', 'HandleVisibility', 'off');
+            axes(O.GUI.AH(31))
+            hold 'on'
+            O.GUI.TimeIndicator = plot([O.Vid.CurrentTime,O.Vid.CurrentTime],[-1000,1000],'-','Color','r', 'HandleVisibility', 'off');
             delete(O.GUI.AH(15));
             set(O.GUI.AH(31), 'HitTest', 'on');
             set(O.GUI.AH(31),'ButtonDownFcn',{@O.selectTime});
-            O.GUI.AH(31).XLim = [-1, 8];
+            O.GUI.AH(31).XLim = [-1, 6];
         end
         if strcmp(selectedOption, 'Tex vs Sil')
             O.AxNum = 8;
             O.createAxes(4, 2)
-            O.Legend = {'Tex + PreTime 0.5', 'Tex + PreTime 1', 'Tex + PreTime 3', 'BaseLine: Tex + PreTime 5 Moving Median Window 5 frames', 'Sil + Pretime 0.5', 'BaseLine Sil Pretime 0.5', 'Sil + Pretime 1', 'BaseLine Sil + Pretime 1', 'Sil + PreTime 3', 'BaseLine Sil + Pretime 3'};
+            O.updateLegend({'Tex + PreTime ', 'Sil + PreTime '})
             O.SelP = 'Full';
             O.plotSilMaps;
             O.plotTimePoint
@@ -451,7 +465,7 @@ classdef C_showTORCVocResponse < handle
             O.InitParTab(3, Leg, 'VocFreqsSil', 12, [95, 5]);
         elseif strcmp(selectedOption, 'Summary')
             O.AxNum = 7;
-            O.Legend = {'Texture all Pretimes', 'Texture Pretime 3 and 5'};
+            O.Legend = {'SEM', 'Texture all Pretimes', 'SEM', 'Texture Pretime 3 and 5'};
             delete(O.GUI.TimeIndicator);
             set(O.GUI.AH(31), 'HitTest', 'off');
             set(O.GUI.AH(31),'ButtonDownFcn', ' ');
@@ -496,8 +510,10 @@ classdef C_showTORCVocResponse < handle
         end
         ROILineNums = size(O.T.Data.(O.SelP), 4);
         O.ROIAvgImage = zeros(length(O.Time), ROILineNums);
+        ROISEMAvg = zeros(length(O.Time), ROILineNums);
+        axes(O.GUI.AH(31))
         for j =1:ROILineNums
-            O.GUI.ROIAverage(j) = plot(O.GUI.AH(31), O.Time, 100*O.ROIAvgImage(:, j), 'Linewidth', 1.5, 'Visible', 'off');
+            O.GUI.ROIAverage(j, :) = errorhull(O.Time, 100*O.ROIAvgImage(:, j), ROISEMAvg(:, j), 'LineWidth', 1.5, 'Visible', 'off');
         end
             set(O.GUI.AH(31), 'HitTest', 'on');
         for i =1:O.AxNum
@@ -538,11 +554,31 @@ classdef C_showTORCVocResponse < handle
         end
         
         function legendClickCallback(O, ~, event)
-            % Toggle the visibility of the corresponding plot
-            if strcmpi(event.Peer.Visible, 'on')
-                event.Peer.Visible = 'off';
+            % Check for right-click event
+            if strcmp(event.SelectionType, 'extend')
+                % Get the legend items
+                legendItems = event.Source.String;
+
+                % Get the clicked item
+                clickedItem = event.Peer.DisplayName;
+
+                % Hide all lines except the clicked one
+                for i = 1:length(legendItems)
+                    if strcmp(legendItems{i}, clickedItem)
+                        % Show the clicked line
+                        event.Peer.Visible = 'on';
+                    else
+                        % Hide other lines
+                        set(event.Peer.Parent.Children(end-(i-1)), 'Visible', 'off');
+                    end
+                end
             else
-                event.Peer.Visible = 'on';
+                % Toggle the visibility of the corresponding plot
+                if strcmpi(event.Peer.Visible, 'on')
+                    event.Peer.Visible = 'off';
+                else
+                    event.Peer.Visible = 'on';
+                end
             end
         end
 
@@ -566,6 +602,14 @@ classdef C_showTORCVocResponse < handle
             O.plotTimePoint;
         end
         
+        function toggleCAxismain(O)
+            for j = 1:size(O.T.VocResp.(O.SelP), 3)
+                for i = 1:size(O.T.VocResp.(O.SelP), 4)
+                    O.GUI.AH((j-1)*size(O.T.VocResp.(O.SelP), 4)+i).CLim = O.GetClims(O.T.VocResp.(O.SelP)(:, :, j, i), [95, 5]);
+                end
+            end
+        end
+        
         function toggleAreaVis(O)
             if strcmp(O.GUI.AH(O.AxNum+1).Children(1).Visible, 'off')
                 for i = O.AxNum+1:2*O.AxNum
@@ -579,14 +623,25 @@ classdef C_showTORCVocResponse < handle
         end
         
         function ellipseMask = createCranMask(O)
+            if strcmp(O.P.Animal, 'mouse193')
+                xoffset = 2;
+                yoffset = -1;
+                Majoroffset = 4;
+                Minoroffset = 4;
+            else
+                xoffset = 4;
+                yoffset = -1;
+                Majoroffset = 5;
+                Minoroffset = 4;
+            end    
             % Parameters for the ellipse
-            centerX = 77;  % X-coordinate of the center
-            centerY = 73;  % Y-coordinate of the center
-            semiMajorAxis = 57;  % Semi-major axis length
-            semiMinorAxis = 55;  % Semi-minor axis length
+            centerX = O.ImageSize(1)/2+xoffset;  % X-coordinate of the center
+            centerY = O.ImageSize(2)/2+yoffset;  % Y-coordinate of the center
+            semiMajorAxis = O.ImageSize(1)/3+Majoroffset;  % Semi-major axis length
+            semiMinorAxis = O.ImageSize(2)/3+Minoroffset;  % Semi-minor axis length
 
             % Size of the matrix
-            matrixSize = [144, 150];
+            matrixSize = [O.ImageSize(1), O.ImageSize(2)];
 
             % Create a grid of coordinates
             [X, Y] = meshgrid(1:matrixSize(2), 1:matrixSize(1));
