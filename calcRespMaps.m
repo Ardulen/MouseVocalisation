@@ -1,4 +1,4 @@
-function [Resp, Data] = calcRespMaps(ImageSize, Parameters, Par, R, VocStartFrame, Sil, WindowSize, offset)
+function [Resp, Data] = calcRespMaps(ImageSize, Parameters, Par, R, VocStartFrame, Sil, WindowSize, offset, VocFreqs, Relative)
     % calculates the vocalization response maps and data averaged over all
     % parameters except a selected parameter "Par" for the Pretimes present
     % in the data using the highest Pretime as baseline, if Sil == 1 Calculates the 
@@ -7,30 +7,37 @@ function [Resp, Data] = calcRespMaps(ImageSize, Parameters, Par, R, VocStartFram
     if Sil == 1
         Resp = zeros([ImageSize, length(Parameters.PreTimes)-1]);
         Data = zeros([ImageSize, size(R.Frames.AvgTime, 3), (length(Parameters.PreTimes)-1)]);
-        for i = 1:2:(length(Parameters.PreTimes)-1)*2
-            oddindex = i/2+0.5; % used to revert the odd numbers the loop is over back to integers for seperate indexing
-            TrialNums = GetTrialNums(0, 0, 0, R.General, 1, Parameters.NTrials, Parameters.PreTimes(oddindex), Parameters.VocFreqs);
-            Data(:, :, :, oddindex) = squeeze(mean(R.Frames.AvgTime(:, :, :, TrialNums), 4));
-            X = VocStartFrame(oddindex):VocStartFrame(oddindex)+10;
+        for i = 1:(length(Parameters.PreTimes)-1)
+            TrialNums = GetTrialNums(0, 0, 0, R.General, 1, Parameters.NTrials, Parameters.PreTimes(i), VocFreqs);
+            Data(:, :, :, i) = squeeze(mean(R.Frames.AvgTime(:, :, :, TrialNums), 4));
+            X = VocStartFrame(i):VocStartFrame(i)+10;
             AvgMovMed = zeros([ImageSize, size(R.Frames.AvgTime, 3)]);
             for k = 1:ImageSize(1)
                 for q = 1:ImageSize(2)
                     if offset == 0
-                        AvgMovMed(k, q, :) = movmedian(squeeze(Data(k, q, :, oddindex)), [WindowSize, 0]);
-                        Area1 = trapz(X, Data(k, q, X, oddindex));
+                        AvgMovMed(k, q, :) = movmedian(squeeze(Data(k, q, :, i)), [WindowSize, 0]);
+                        Area1 = trapz(X, Data(k, q, X, i));
                         Area2 = trapz(X, AvgMovMed(k, q, X));
-                        Resp(k, q, round(oddindex)) = 100*(Area1-Area2);
+                        Resp(k, q, round(i)) = 100*(Area1-Area2);
                     else
-                        AvgMovMed(k, q, :) = medfilt1(squeeze(Data(k, q, :, oddindex)), WindowSize);
-                        SecStart = VocStartFrame(oddindex)+30:20:VocStartFrame(oddindex)+170;
+                        AvgMovMed(k, q, :) = medfilt1(squeeze(Data(k, q, :, i)), WindowSize);
+                        OffStart = VocStartFrame(i)+10:20:VocStartFrame(i)+170;
+                        OnStart = VocStartFrame(i):20:VocStartFrame(i)+160;
                         TotArea = 0;
-                        for j = 1:numel(SecStart)
-                            Area1 = trapz(X, Data(k, q, SecStart(j):SecStart(j)+10, oddindex));
-                            Area2 = trapz(X, AvgMovMed(k, q, SecStart(j):SecStart(j)+10));
-                            Diff = 100*(Area1-Area2);
-                            TotArea = TotArea + Diff;
+                        for j = 1:numel(OffStart)
+                            OffArea1 = trapz(X, Data(k, q, OffStart(j):OffStart(j)+10, i));
+                            OffArea2 = trapz(X, AvgMovMed(k, q, OffStart(j):OffStart(j)+10));
+                            OffDiff = 100*(OffArea1-OffArea2);
+                            if Relative
+                                OnArea1 = trapz(X, Data(k, q, OnStart(j):OnStart(j)+10, i));
+                                OnArea2 = trapz(X, AvgMovMed(k, q, OnStart(j):OnStart(j)+10));
+                                OnDiff = 100*(OnArea1-OnArea2);
+                                TotArea = TotArea + (OnDiff-OffDiff)/(OnDiff+OffDiff);
+                            else
+                                TotArea = TotArea + OffDiff;
+                            end
                         end
-                        Resp(k, q, round(oddindex)) = TotArea/7;
+                        Resp(k, q, round(i)) = TotArea/7;
                     end
                 end
             end

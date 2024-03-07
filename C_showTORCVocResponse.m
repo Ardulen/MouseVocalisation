@@ -71,7 +71,7 @@ classdef C_showTORCVocResponse < handle
         %% Set figure
         MP = get(0,'MonitorPositions');
         NY = MP(1,end); HPixels = 540;
-        O.FigureName=[O.P.Animal,' R',num2str(O.P.Recording),' Texture Response'];
+        O.FigureName=[O.P.Animal,' R',num2str(O.P.Recording),' Vocalization Response'];
         Fig = figure(O.P.FIG); clf; set(O.P.FIG,'name', O.FigureName, 'Color',[1,1,1],'Position',[5,NY-HPixels-60,1250,HPixels]);
 
         O.LineColors = [0, 0.4470, 0.7410; 0.8500, 0.3250, 0.0980; 0.9290, 0.6940, 0.1250; 0.4940, 0.1840, 0.5560];
@@ -82,7 +82,7 @@ classdef C_showTORCVocResponse < handle
         
         O.createAxes(4, 2);
         [~, O.GUI.AH(31)] = axesDivide(1,1,[0.04, 0.1, 0.7, 0.2],[],0.3,'c');
-        annotation('textbox','String', O.FigureName,'Position',[0.3,0.96,0.7,0.05],'Horiz','l','FontSize',12,'FontW','b','EdgeColor',[1,1,1]);
+        annotation('textbox','String', O.FigureName,'Position',[0.25,0.96,0.7,0.05],'Horiz','l','FontSize',12,'FontW','b','EdgeColor',[1,1,1]);
         
 
 
@@ -92,7 +92,7 @@ classdef C_showTORCVocResponse < handle
         %% popup menus
         
         O.GUI.Mapspopup = uicontrol('Style',  'popup', 'FontSize', 8, 'Position', [870, 520, 150, 15]);
-        O.GUI.Mapspopup.String = {'Tex vs Sil', 'Correlations', 'Variances', 'Realizations', 'Vocalization Frequency', 'VocFreqs Silent', 'Summary'};
+        O.GUI.Mapspopup.String = {'Tex vs Sil', 'Correlations', 'Variances', 'Realizations', 'Vocalization Frequency', 'VocFreqs Silent', 'Offset Voc Sil', 'Onset/Offset', 'Summary'};
         O.GUI.Mapspopup.Callback = @O.MapsdropdownCallback;
         PretimeCellarray = cellfun(@num2str, num2cell(O.T.Parameters.PreTimes), 'UniformOutput', false);
         O.GUI.PreTimepopup = uicontrol('Style', 'popup', 'FontSize', 8, 'Position', [1120, 520, 50, 15]);
@@ -130,8 +130,11 @@ classdef C_showTORCVocResponse < handle
         O.T.FLAvg(:, :, :, 3) = mean(FirstTrialVocRespSil, 4);
         O.T.FLAvg(:, :, :, 4) = mean(LastTrialVocRespSil, 4);
         
-
-
+        for k = 1:size(O.T.VocResp.OnsetOffsetSilPerFreq, 4)
+        for i = 1:size(O.T.VocResp.OnsetOffsetSilPerFreq, 3)
+            O.T.VocResp.OnsetOffsetSilPerFreq(:, :, i, k) = O.T.VocResp.OnsetOffsetSilPerFreq(:, :, i, k)./max(O.T.VocResp.OnsetOffsetSilPerFreq(:, :, i, k), [], 'all');
+        end
+        end
         
         %% plot ROI Traces
 
@@ -152,7 +155,7 @@ classdef C_showTORCVocResponse < handle
                 xCenter = O.T.Parameters.PreTimes(j)+0.2*(i-1);
 
                 % Use the rectangle function to create each rectangle
-                O.GUI.VocStims(j, i) = rectangle('Position', [xCenter, -5, 0.1, 10], 'FaceColor', 'g', 'EdgeColor', 'none', 'Visible', 'off', 'HandleVisibility', 'off');
+                O.GUI.VocStims(j, i) = rectangle('Position', [xCenter, -10, 0.1, 20], 'FaceColor', 'g', 'EdgeColor', 'none', 'Visible', 'off', 'HandleVisibility', 'off');
             end
         end
         plot([0, 0],[-100,100],'-','Color','k', 'HandleVisibility', 'Off');
@@ -198,7 +201,7 @@ classdef C_showTORCVocResponse < handle
             Clims = O.GetClims(O.T.VocResp.(Par), Clims);
             for j = 1:length(O.T.Parameters.(Par))
                for i = 1:length(O.T.Parameters.PreTimes)-1
-                    O.plotMaps(Par, O.T.VocResp.(Par)(:, :, j, i), 'Area under graph',  Clims, O.LineColors(i, :), (j-1)*4+i, O.Legend{(j-1)*6+(i*2)}, 'jet')
+                    O.plotMaps(Par, O.T.VocResp.(Par)(:, :, j, i), 'Area under graph',  Clims, O.LineColors(i, :), (j-1)*4+i, O.Legend{(j-1)*6+(i*2)}, 'jet', 1, (j-1)*4+i)
                end
             end
         end    
@@ -209,26 +212,26 @@ classdef C_showTORCVocResponse < handle
             ClimsFull = O.GetClims(O.T.VocResp.PreTime(:, :, :, 1), [95, 5]);
             ClimsSil = O.GetClims(O.T.VocResp.Sil(:, :, :, 1), [95, 5]);
             for i = 1:length(O.T.Parameters.PreTimes)-1
-                O.plotMaps('Full', O.T.VocResp.PreTime(:, :, i), 'Area under Graph', ClimsFull, O.LineColors(i, :), i, O.Legend{i*2}, 'jet')
-                O.plotMaps('Sil', O.T.VocResp.Sil(:, :, i), 'Area under Graph', ClimsSil, O.LineColors(i, :), i+length(O.T.Parameters.PreTimes), O.Legend{i*2+6}, 'jet');
+                O.plotMaps('Full', O.T.VocResp.PreTime(:, :, i), 'Area under Graph', ClimsFull, O.LineColors(i, :), i, O.Legend{i*2}, 'jet', 1, i)
+                O.plotMaps('Sil', O.T.VocResp.Sil(:, :, i), 'Area under Graph', ClimsSil, O.LineColors(i, :), i+length(O.T.Parameters.PreTimes), O.Legend{i*2+6}, 'jet', 1, i+length(O.T.Parameters.PreTimes));
             end
         end 
         
         function plotSumMaps(O)
             Clims = O.GetClims(O.T.TexResp, [95, 5]);
-            O.plotMaps("TexResp", O.T.TexResp, 'Change Norm (%)', Clims, O.LineColors(1, :), 1, 'Texture Response', 'jet');
+            O.plotMaps("TexResp", O.T.TexResp, 'Change Norm (%)', Clims, O.LineColors(1, :), 1, 'Texture Response', 'jet', 1, 1);
             Clims = O.GetClims(O.T.FullVocAvg, [95, 5]);
-            O.plotMaps('AvgVocResp', O.T.FullVocAvg, 'Area of peak', Clims, 'k', 2, 'Texture Voc resp', 'jet')
+            O.plotMaps('AvgVocResp', O.T.FullVocAvg, 'Area of peak', Clims, 'k', 2, 'Texture Voc resp', 'jet', 1, 2)
             Clims = O.GetClims(O.T.SilVocAvg, [95, 5]);
-            O.plotMaps('AvgVocResp', O.T.SilVocAvg, 'Area under peak', Clims, 'k', 3, 'Silent Voc resp', 'jet')
+            O.plotMaps('AvgVocResp', O.T.SilVocAvg, 'Area under peak', Clims, 'k', 3, 'Silent Voc resp', 'jet', 1, 3)
             Clims = O.GetClims(O.T.SusLvl, [95, 5]);
-            O.plotMaps("SusLvl", O.T.SusLvl, 'Change Norm (%)', Clims, O.LineColors(2, :), 4, 'Sustained Level', 'jet');
+            O.plotMaps("SusLvl", O.T.SusLvl, 'Change Norm (%)', Clims, O.LineColors(2, :), 4, 'Sustained Level', 'jet', 1, 4);
             Clims = O.GetClims(O.T.FitDecMap, [95, 5]);
-            O.plotMaps("FitDec", O.T.FitDecMap, 'Tau', Clims, O.LineColors(2, :), 5, 'Decay constant', 'jet');
+            O.plotMaps("FitDec", O.T.FitDecMap, 'Tau', Clims, O.LineColors(2, :), 5, 'Decay constant', 'jet', 1, 5);
             Clims = O.GetClims(O.T.OffsetSilAvg, [95, 5]);
-            O.plotMaps("OffSetSilAvg", O.T.OffsetSilAvg, 'Avg Area of peak', Clims, 'k', 6, 'Voc offset resp', 'jet');
+            O.plotMaps("OffSetSilAvg", O.T.OffsetSilAvg, 'Avg Area of peak', Clims, 'k', 6, 'Voc offset resp', 'jet', 1, 6);
             Clims = O.GetClims(O.T.OffsetAvg, [95, 5]);
-            O.plotMaps("OffSetAvg", O.T.OffsetAvg, 'Avg Area of peak', Clims, 'k', 7, 'Tex+Voc offset resp', 'jet');
+            O.plotMaps("OffSetAvg", O.T.OffsetAvg, 'Avg Area of peak', Clims, 'k', 7, 'Tex+Voc offset resp', 'jet', 1, 7);
 
         end
         
@@ -240,7 +243,7 @@ classdef C_showTORCVocResponse < handle
                 else
                     Clims = O.Vid.Clims;
                 end
-                O.plotMaps(['TimePoint', num2str(i)], MapData, ' ', Clims, 'k', 4+4*(i-1), ['Pretime', num2str(O.T.Parameters.PreTimes(O.Vid.PreTime)),' @ ',num2str(O.Vid.CurrentTime,2),'s'], 'bone')
+                O.plotMaps(['TimePoint', num2str(i)], MapData, ' ', Clims, 'k', 4+4*(i-1), ['Pretime', num2str(O.T.Parameters.PreTimes(O.Vid.PreTime)),' @ ',num2str(O.Vid.CurrentTime,2),'s'], 'bone', 0, 1)
             end
         end
         
@@ -261,20 +264,33 @@ classdef C_showTORCVocResponse < handle
             end   
         end
         
-        function plotMaps(O, GUIDat, MapData, ylab, Clims, Color, AxNum, Title, ColMap)
+        function plotMaps(O, GUIDat, MapData, ylab, Clims, Color, AxNum, Title, ColMap, APLM, DatNum)
             %plots a single map for given data
             cAH = O.GUI.AH(AxNum);
             hold(cAH, 'on');
-            O.GUI.(GUIDat)(AxNum) = imagesc(cAH, O.X, O.Y, MapData'); %[cAH, AHB, cBar] = HF_imagescCraniotomy(Fig,cAH,cAH,O.X,O.Y,Adaptmap(:, :, O.P.Pl(i)),Adaptmap(:, :, O.P.Pl(i)),R.Frames.CraniotomyMask, 'AlphaF', 1, 'AlphaB', 0); 
-            O.GUI.(GUIDat)(AxNum).AlphaData = O.CraniotomyMask'.*1;
+            O.GUI.(GUIDat)(DatNum) = imagesc(cAH, O.X, O.Y, MapData'); %[cAH, AHB, cBar] = HF_imagescCraniotomy(Fig,cAH,cAH,O.X,O.Y,Adaptmap(:, :, O.P.Pl(i)),Adaptmap(:, :, O.P.Pl(i)),R.Frames.CraniotomyMask, 'AlphaF', 1, 'AlphaB', 0); 
+            O.GUI.(GUIDat)(DatNum).AlphaData = O.CraniotomyMask'.*1;
             set(cAH,'YDir','reverse','DataAspectRatio',[1,1,1])
             set(cAH, 'FontSize', 5);
             set(cAH,'ButtonDownFcn',{@O.selectROI});
             colormap(cAH, ColMap)
             caxis(cAH, Clims);
-            set(O.GUI.(GUIDat)(AxNum),'HitTest','off');
+            cAH.YAxis.Visible = 'off';
+            cAH.XAxis.Visible = 'off';
+            set(O.GUI.(GUIDat)(DatNum),'HitTest','off');
             c1 = colorbar(cAH);
             ylabel(c1, ylab);
+            if APLM
+                plot(cAH,[O.X(1),O.X(1)+1],[O.Y(end),O.Y(end)],'k','LineWidth',1);
+                text(cAH,O.X(1)-0.2,O.Y(end)-0.2,'L','Rotation',90,'horiz','center', 'FontSize', 4)
+                text(cAH,O.X(1)-0.2,O.Y(end)-0.8,'M','Rotation',90,'horiz','center',  'FontSize', 4)
+
+                plot(cAH,[O.X(1),O.X(1)],[O.Y(end),O.Y(end)-1],'k','LineWidth',0.5)
+                text(cAH,O.X(1)+0.2,O.Y(end)+0.2,'A','horiz','center',  'FontSize', 4)
+                text(cAH,O.X(1)+0.8,O.Y(end)+0.2,'P','horiz','center',  'FontSize', 4)
+
+                text(cAH,O.X(1)+0.1,O.Y(end)-0.2,'1mm','horiz','left',  'FontSize', 4)
+            end
             %ylabel(cAH, 'Mediolateral (mm)', 'FontSize', 4); xlabel(cAH, 'Anteroposterior (mm)', 'FontSize', 4);
             title(cAH, Title, 'Color', Color, 'FontSize', 6);
             ylim(cAH, [min(O.Y), max(O.Y)]);
@@ -382,8 +398,8 @@ classdef C_showTORCVocResponse < handle
         end
         
         function updateTimePlots(O)
-            for i = 1:size(O.T.Data.(O.SelP), 4)/length(O.T.Parameters.PreTimes)
-                MapData = 100*O.T.Data.(O.SelP)(:, :, round((O.Vid.CurrentTime+2)*O.P.FR), round((i-1)*4+O.Vid.PreTime));
+            for i = 1:size(O.T.Data.(O.SelP), 4)/(length(O.T.Parameters.PreTimes)-1)
+                MapData = 100*O.T.Data.(O.SelP)(:, :, round((O.Vid.CurrentTime+2)*O.P.FR), round((i-1)*3+O.Vid.PreTime));
                 TimePoint = ['O.GUI.TimePoint', num2str(i)];
                 set(eval(TimePoint), 'CData', MapData')
             end
@@ -463,6 +479,38 @@ classdef C_showTORCVocResponse < handle
                 Leg{i} = ['Freq ', num2str(O.T.Parameters.VocFreqs(i)), ' Pretime '];
             end  
             O.InitParTab(3, Leg, 'VocFreqsSil', 12, [95, 5]);
+        elseif strcmp(selectedOption, 'Offset Voc Sil')
+            for i = 1:length(O.T.Parameters.VocFreqs)
+                Leg{i} = ['Offset Freq ', num2str(O.T.Parameters.VocFreqs(i)), ' Pretime '];
+            end  
+            O.AxNum = 12;           
+            O.createAxes(4, 3)
+            O.updateLegend(Leg);
+            O.SelP = 'VocFreqsSil';
+            Clims = O.GetClims(O.T.VocResp.OffsetSilPerFreq, [95, 5]);
+            for j = 1:length(O.T.Parameters.VocFreqs)
+               for i = 1:length(O.T.Parameters.PreTimes)-1
+                    O.plotMaps('OffsetSilPerFreq', O.T.VocResp.OffsetSilPerFreq(:, :, j, i), 'Area under graph',  Clims, O.LineColors(i, :), (j-1)*4+i, O.Legend{(j-1)*6+(i*2)}, 'jet', 1, (j-1)*4+i)
+               end
+            end
+            O.plotTimePoint;
+        elseif strcmp(selectedOption, 'Onset/Offset')
+            for i = 1:length(O.T.Parameters.VocFreqs)
+                Leg{i} = ['Onset/Offset Freq ', num2str(O.T.Parameters.VocFreqs(i)), ' Pretime '];
+            end  
+            O.AxNum = 12;           
+            O.createAxes(4, 3)
+            O.updateLegend(Leg);
+            O.SelP = 'VocFreqsSil';
+            CM = HF_colormap({[0,0,1],[1,1,1],[1,0,0]});
+            %Clims = O.GetClims(O.T.VocResp.OffsetSilPerFreq, [80, 20]);
+            Clims = [-0.001, 0.001];%[-abs(Clims(2)), abs(Clims(2))];
+            for j = 1:length(O.T.Parameters.VocFreqs)
+               for i = 1:length(O.T.Parameters.PreTimes)-1
+                    O.plotMaps('OnsetOffsetSilPerFreq', O.T.VocResp.OnsetOffsetSilPerFreq(:, :, j, i), 'OOI',  Clims, O.LineColors(i, :), (j-1)*4+i, O.Legend{(j-1)*6+(i*2)}, CM, 1, (j-1)*4+i)
+               end
+            end
+            O.plotTimePoint;
         elseif strcmp(selectedOption, 'Summary')
             O.AxNum = 7;
             O.Legend = {'SEM', 'Texture all Pretimes', 'SEM', 'Texture Pretime 3 and 5'};

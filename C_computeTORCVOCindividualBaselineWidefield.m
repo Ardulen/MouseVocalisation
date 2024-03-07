@@ -10,6 +10,9 @@ checkField(P, 'FR', 100);
 checkField(P, 'WindowSize', 5);
 checkField(P, 'IntAfterAvg', 1)
 checkField(P, 'Mean', 1) % 1 for mean 0 for median
+checkField(P, 'Save', 0)
+checkField(P, 'Source', 'VideoCalcium')
+checkField(P, 'AllVocs', 0)
 
     T = struct;
     Time=R.Frames.TimeAvg;
@@ -24,8 +27,16 @@ checkField(P, 'Mean', 1) % 1 for mean 0 for median
     Parameters.VocFreqsSil = R.General.Paradigm.Stimulus.Parameters.VocalFrequencies.Value;
     
     fprintf('\n');
-    VocStartFrame = zeros(1, length(Parameters.PreTimes));
-        
+    VocStartFrame = zeros(1, length(Parameters.PreTimes)); 
+    for i =1:length(Parameters.PreTimes)-1
+        VocStartFrame(i) = (2+Parameters.PreTimes(i))*P.FR;
+    end
+    %Onset/Offset Index per VocFreq
+    T.VocResp.OnsetOffsetSilPerFreq = zeros([ImageSize, numel(Parameters.VocFreqs), numel(Parameters.PreTimes)-1]);
+    for i = 1:numel(Parameters.VocFreqs)
+        [T.VocResp.OnsetOffsetSilPerFreq(:, :, i, :), ~] = calcRespMaps(ImageSize, Parameters, 'Par', R, VocStartFrame, 1, 50, 1, Parameters.VocFreqs(i), 1);
+    end  
+    
     T.VocResp.FullResp = zeros([ImageSize(1), ImageSize(2), numel(Parameters.Corrs), numel(Parameters.Vars), numel(Parameters.Reals), numel(Parameters.VocFreqs), numel(Parameters.PreTimes)-1]);
     T.VocResp.SEM = zeros([ImageSize(1), ImageSize(2), size(R.Frames.AvgTime, 3), numel(Parameters.Corrs), numel(Parameters.Vars), numel(Parameters.Reals), numel(Parameters.VocFreqs), numel(Parameters.PreTimes)-1]);
     T.DiffAvg = zeros([ImageSize(1), ImageSize(2), size(R.Frames.AvgTime, 3), numel(Parameters.Corrs), numel(Parameters.Vars), numel(Parameters.Reals), numel(Parameters.VocFreqs), numel(Parameters.PreTimes)-1]);
@@ -90,10 +101,24 @@ checkField(P, 'Mean', 1) % 1 for mean 0 for median
         end
         for i = 1:numel(Parameters.PreTimes)-1
             VocStart = (2+Parameters.PreTimes(i))*P.FR;
-            dat = VocStart:VocStart+10;
-            for j = 1:ImageSize(1)
-                for k = 1:ImageSize(2)
-                    T.VocResp.PreTime(j, k, i) = trapz(dat, D.PreTime(j, k, dat, i));
+            if P.AllVocs
+                StartFrames = VocStart:20:VocStart+180;
+                for j = 1:ImageSize(1)
+                    for k = 1:ImageSize(2)
+                        Area = 0;
+                        for q = 1:numel(StartFrames)
+                            dat = StartFrames(q):StartFrames(q)+10;                           
+                            Area = Area + trapz(dat, D.PreTime(j, k, dat, i));
+                        end
+                        T.VocResp.PreTime(j, k, i) = Area/10;
+                    end
+                end
+            else
+                dat = VocStart:VocStart+10;
+                for j = 1:ImageSize(1)
+                    for k = 1:ImageSize(2)
+                        T.VocResp.PreTime(j, k, i) = trapz(dat, D.PreTime(j, k, dat, i));
+                    end
                 end
             end
         end
@@ -104,10 +129,24 @@ checkField(P, 'Mean', 1) % 1 for mean 0 for median
             for q = 1:numel(Parameters.(Params{p}))
                 for i = 1:numel(Parameters.PreTimes)-1
                     VocStart = (2+Parameters.PreTimes(i))*P.FR;
-                    dat = VocStart:VocStart+10;
-                    for j = 1:ImageSize(1)
-                        for k = 1:ImageSize(2)
-                            T.VocResp.(Params{p})(j, k, q, i) = trapz(dat, D.(Params{p})(j, k, dat, q, i));
+                    if P.AllVocs
+                        StartFrames = VocStart:20:VocStart+180;
+                        for j = 1:ImageSize(1)
+                            for k = 1:ImageSize(2)
+                                Area = 0;
+                                for l = 1:numel(StartFrames)
+                                    dat = StartFrames(l):StartFrames(l)+10;                           
+                                    Area = Area + trapz(dat, D.(Params{p})(j, k, dat, q, i));
+                                end
+                                T.VocResp.(Params{p})(j, k, q, i) = Area/10;
+                            end
+                        end
+                    else
+                        dat = VocStart:VocStart+10;
+                        for j = 1:ImageSize(1)
+                            for k = 1:ImageSize(2)
+                                T.VocResp.(Params{p})(j, k, q, i) = trapz(dat, D.(Params{p})(j, k, dat, q, i));
+                            end
                         end
                     end
                 end
@@ -141,8 +180,8 @@ checkField(P, 'Mean', 1) % 1 for mean 0 for median
         TrialNums = GetTrialNums(Parameters.Corrs, Parameters.Vars, Parameters.Reals, R.General, 1, Parameters.NTrials, Parameters.PreTimes(i), Parameters.VocFreqs);
         SEM.Full(:, :, :, i+length(Parameters.PreTimes)-1) = 2*std(R.Frames.AvgTime(:, :, :, TrialNums),[],4)/sqrt(size(R.Frames.AvgTime(:, :, :, TrialNums),4));
     end    
-    [T.VocResp.Sil, Data.Full(:, :, :, 4:6)] = calcRespMaps(ImageSize, Parameters, 'Par', R, VocStartFrame, 1, 50, 0);
-    [T.VocResp.VocFreqsSil, ~] = calcRespMaps(ImageSize, Parameters, 'VocFreqs', R, VocStartFrame, '1', 50, 0); 
+    [T.VocResp.Sil, Data.Full(:, :, :, 4:6)] = calcRespMaps(ImageSize, Parameters, 'Par', R, VocStartFrame, 1, 50, 0, Parameters.VocFreqs, 0);
+    [T.VocResp.VocFreqsSil, ~] = calcRespMaps(ImageSize, Parameters, 'VocFreqs', R, VocStartFrame, '1', 50, 0, Parameters.VocFreqs, 0); 
     FunCal = {'Parameters.Corrs', 'Parameters.Vars', 'Parameters.Reals', 'R.General', '1', 'Parameters.NTrials', 'Parameters.PreTimes(i)', 'Parameters.VocFreqs'};
     [Data.VocFreqsSil, SEM.VocFreqsSil] = calcDataArray('VocFreqs', numel(Parameters.VocFreqs), R, FunCal, ImageSize, Parameters);
 
@@ -154,23 +193,38 @@ checkField(P, 'Mean', 1) % 1 for mean 0 for median
     TrialNums = GetTrialNums(Parameters.Corrs, Parameters.Vars, Parameters.Reals, R.General, 0, Parameters.NTrials, Parameters.PreTimes, Parameters.VocFreqs);
     Data.Summary(:, :, :, 1) = squeeze(mean(R.Frames.AvgTime(:, :, :, TrialNums), 4));
     SEM.Summary(:, :, :, 1) = 2*std(R.Frames.AvgTime(:, :, :, TrialNums),[],4)/sqrt(size(R.Frames.AvgTime(:, :, :, TrialNums),4));
-    T.TexResp = 100*squeeze(max(Data.Summary(:, :, 2*P.FR:1:2.5*P.FR, 1), [], 3));
+    T.Summary.TexResp = 100*squeeze(max(Data.Summary(:, :, 2*P.FR:1:2.5*P.FR, 1), [], 3));
     % Sustained level using Pretimes 3 and 5
 
     TrialNums = GetTrialNums(Parameters.Corrs, Parameters.Vars, Parameters.Reals, R.General, 0, Parameters.NTrials, [3, 5], Parameters.VocFreqs);
     Data.Summary(:, :, :, 2) = squeeze(mean(R.Frames.AvgTime(:, :, :, TrialNums), 4));
     SEM.Summary(:, :, :, 2) = 2*std(R.Frames.AvgTime(:, :, :, TrialNums),[],4)/sqrt(size(R.Frames.AvgTime(:, :, :, TrialNums),4));
-    T.SusLvl = 100*squeeze(median(Data.Summary(:, :, 4*P.FR:1:5*P.FR, 2), 3));
+    T.Summary.SusLvl = 100*squeeze(median(Data.Summary(:, :, 4*P.FR:1:5*P.FR, 2), 3));
 
     % vocalisation offset reponse
 
-    [T.VocResp.OffsetSil, Data.OffsetVocSil] = calcRespMaps(ImageSize, Parameters, 'Par', R, VocStartFrame, 1, 50, 1);
+    [T.VocResp.OffsetSil, Data.OffsetVocSil] = calcRespMaps(ImageSize, Parameters, 'Par', R, VocStartFrame, 1, 50, 1, Parameters.VocFreqs, 0);
+    % Onset/Offset response
+    [T.VocResp.OnsetOffsetSil, ~] = calcRespMaps(ImageSize, Parameters, 'Par', R, VocStartFrame, 1, 50, 1, Parameters.VocFreqs, 1);
 
-
+    
+    % Voc offset response divided by VocFreq
+    
+    T.VocResp.OffsetSilPerFreq = zeros([ImageSize, numel(Parameters.VocFreqs), numel(Parameters.PreTimes)-1]);
+    for i = 1:numel(Parameters.VocFreqs)
+        [T.VocResp.OffsetSilPerFreq(:, :, i, :), ~] = calcRespMaps(ImageSize, Parameters, 'Par', R, VocStartFrame, 1, 50, 1, Parameters.VocFreqs(i), 0);
+    end
+    
+    %Onset/Offset Index per VocFreq
+    T.VocResp.OnsetOffsetSilPerFreq = zeros([ImageSize, numel(Parameters.VocFreqs), numel(Parameters.PreTimes)-1]);
+    for i = 1:numel(Parameters.VocFreqs)
+        [T.VocResp.OnsetOffsetSilPerFreq(:, :, i, :), ~] = calcRespMaps(ImageSize, Parameters, 'Par', R, VocStartFrame, 1, 50, 1, Parameters.VocFreqs(i), 1);
+    end    
+    
     % sound offset response
 
     Data.OffsetResp = zeros([ImageSize, length(Time), (length(Parameters.PreTimes)-1)*2]);
-    T.OffsetResp = zeros([ImageSize, length(Parameters.PreTimes)-1]);
+    OffsetResp = zeros([ImageSize, length(Parameters.PreTimes)-1]);
     AvgMovMed = zeros([ImageSize, size(R.Frames.AvgTime, 3)]);
     for i =1:2:(length(Parameters.PreTimes)-1)*2
        oddindex = i/2+0.5;
@@ -178,7 +232,7 @@ checkField(P, 'Mean', 1) % 1 for mean 0 for median
        VocStartFrame(oddindex) = (2+Parameters.PreTimes(oddindex))*P.FR;
        TrialNums = GetTrialNums(Parameters.Corrs, Parameters.Vars, Parameters.Reals, R.General, 0, Parameters.NTrials, Parameters.PreTimes(oddindex), Parameters.VocFreqs);
        TexBaseline = squeeze(mean(R.Frames.AvgTime(:, :, :, TrialNums), 4));
-       [AvgMovMed, T.OffsetResp(:, :, oddindex), Data.OffsetResp(:, :, :, i)] = calcPeakSize(AvgMovMed, FunCal, ImageSize, VocStartFrame(oddindex), TexBaseline, 50, R, 1);              
+       [AvgMovMed, OffsetResp(:, :, oddindex), Data.OffsetResp(:, :, :, i)] = calcPeakSize(AvgMovMed, FunCal, ImageSize, VocStartFrame(oddindex), TexBaseline, 50, R, 1);              
        Data.OffsetResp(:, :, :, i+1) = AvgMovMed;
     end   
 
@@ -207,19 +261,37 @@ checkField(P, 'Mean', 1) % 1 for mean 0 for median
                 end
         end
     end
-    T.FitDecMap = As;
-    T.DecayMap = 0.2+MedIndices./P.FR;
+    T.Summary.FitDecMap = As;
+    T.Summary.DecayMap = 0.2+MedIndices./P.FR;
+    T.Summary.OffsetResp = mean(OffsetResp, 3);
+    T.Summary.TexVocResp = mean(T.VocResp.PreTime, 3);
+    T.Summary.SilVocResp = mean(T.VocResp.Sil, 3);
+    T.Summary.SilVocOffset = mean(T.VocResp.OffsetSil, 3);
     T.Parameters = Parameters;
     T.Data = Data;
     T.SEM = SEM;
     M = struct;
-    M.Metrics.Mean.TexResp = double(T.TexResp);
-    M.Metrics.Mean.TexVocResp = mean(T.VocResp.PreTime, 3);
-    M.Metrics.Mean.SilVocResp = mean(T.VocResp.Sil, 3);
-    M.Metrics.Mean.SilVocOffset = mean(T.VocResp.OffsetSil, 3);
-    M.Metrics.Mean.OffsetResp = mean(T.OffsetResp, 3);
-    M.Metrics.Mean.SusLvl = double(T.SusLvl);
-    M.Metrics.Mean.FitDecMap = T.FitDecMap;
+    M.Metrics.Mean.TexResp = double(T.Summary.TexResp);
+    M.Metrics.Mean.TexVocResp = T.Summary.TexVocResp;
+    M.Metrics.Mean.SilVocResp = T.Summary.SilVocResp;
+    M.Metrics.Mean.SilVocOffset = T.Summary.SilVocOffset;
+    M.Metrics.Mean.OffsetResp = T.Summary.OffsetResp;
+    M.Metrics.Mean.SusLvl = double(T.Summary.SusLvl);
+    M.Metrics.Mean.FitDecMap = T.Summary.FitDecMap;
     
+    [X, Y, PixelPerMM] = C_pixelToMM(P,R,R.Frames);
+    M.Image.Xmm = X;
+    M.Image.Ymm = Y;
+    M.Image.PixelPerMM = PixelPerMM;
+    M.Image.AnatomyFrame = R.Frames.AverageRaw;
+    M.Image.CraniotomyMask = R.Frames.CraniotomyMask;
+    M.Image.CraniotomyEllipsoid = R.Frames.CraniotomyEllipsoid;
     
+    if P.Save
+        
+        folderPath = ['/home/experimenter/dnp-backup/ControllerData/', P.Animal, '/R', num2str(P.Recording), '/Results/'];
+
+        % Save the variable to a MAT-file in the specified folder
+        save(fullfile(folderPath, 'M.mat'), 'M');
+    end
 end  

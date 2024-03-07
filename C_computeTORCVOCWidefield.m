@@ -35,7 +35,7 @@ checkField(P, 'WindowSize', 5);
     for i =1:length(Parameters.PreTimes)-1
         FunCal = {Parameters.Corrs, Parameters.Vars, Parameters.Reals, R.General, 0, Parameters.NTrials, Parameters.PreTimes(i), Parameters.VocFreqs};
         VocStartFrame(i) = (2+Parameters.PreTimes(i))*P.FR;
-        [AvgMovMed, T.VocResp.PreTime, Data.Full(:, :, :, i)] = calcPeakSize(AvgMovMed, T.VocResp.PreTime, FunCal, ImageSize, VocStartFrame(i), TexBaseline, P.WindowSize, i, R);              
+        [AvgMovMed, T.VocResp.PreTime, Data.Full(:, :, :, i)] = calcPeakSize(AvgMovMed, FunCal, ImageSize, VocStartFrame(i), TexBaseline, P.WindowSize, R, '0');              
     end   
     Data.Full(:, :, :, i+1) = AvgMovMed;
     
@@ -58,7 +58,7 @@ checkField(P, 'WindowSize', 5);
 %             end
 %         end
     
-    [T.VocResp.Sil, Data.Full(:, :, :, 5:10)] = calcRespMaps(ImageSize, Parameters, 'Par', R, VocStartFrame, 1, 50, 0);
+    [T.VocResp.Sil, Data.Full(:, :, :, 4:6)] = calcRespMaps(ImageSize, Parameters, 'Par', R, VocStartFrame, 1, 50, 0, Parameters.VocFreqs);
 
 %     for i =1:length(Parameters.PreTimes)
 %         TrialNums = GetTrialNums(Parameters.Corrs, Parameters.Vars, Parameters.Reals, R.General, 0, Parameters.NTrials, Parameters.PreTimes(i), Parameters.VocFreqs);
@@ -90,19 +90,19 @@ checkField(P, 'WindowSize', 5);
 
    %% Vocalization response by correlations
    fprintf('\nCalulcating vocalization reponse by correlation') 
-   [T.VocResp.Corrs, Data.Corrs] = calcRespMaps(ImageSize, Parameters, 'Corrs', R, VocStartFrame, '0', P.WindowSize, 0);
+   [T.VocResp.Corrs, Data.Corrs] = calcRespMaps(ImageSize, Parameters, 'Corrs', R, VocStartFrame, '0', P.WindowSize, 0, Parameters.VocFreqs);
 
    %% Vocalization response by Realization
    fprintf('\nCalulcating vocalization reponse by Realization')
-   [T.VocResp.Reals, Data.Reals] = calcRespMaps(ImageSize, Parameters, 'Reals', R, VocStartFrame, '0', P.WindowSize, 0);
+   [T.VocResp.Reals, Data.Reals] = calcRespMaps(ImageSize, Parameters, 'Reals', R, VocStartFrame, '0', P.WindowSize, 0, Parameters.VocFreqs);
    %% Vocalization response by Variance
    fprintf('\nCalulcating vocalization reponse by Variance')   
-   [T.VocResp.Vars, Data.Vars] = calcRespMaps(ImageSize, Parameters, 'Vars', R, VocStartFrame, '0', P.WindowSize, 0);
+   [T.VocResp.Vars, Data.Vars] = calcRespMaps(ImageSize, Parameters, 'Vars', R, VocStartFrame, '0', P.WindowSize, 0, Parameters.VocFreqs);
    %% Vocalization response by Vocalization Frequency
    fprintf('\nCalulcating vocalization reponse by Vocalization Frequency')   
-   [T.VocResp.VocFreqs, Data.VocFreqs] = calcRespMaps(ImageSize, Parameters, 'VocFreqs', R, VocStartFrame, '0', P.WindowSize, 0);
+   [T.VocResp.VocFreqs, Data.VocFreqs] = calcRespMaps(ImageSize, Parameters, 'VocFreqs', R, VocStartFrame, '0', P.WindowSize, 0, Parameters.VocFreqs);
    %% Vocalization response by Vocalization Frequency without texture   
-   [T.VocResp.VocFreqsSil, Data.VocFreqsSil] = calcRespMaps(ImageSize, Parameters, 'VocFreqs', R, VocStartFrame, '1', P.WindowSize, 0);
+   [T.VocResp.VocFreqsSil, Data.VocFreqsSil] = calcRespMaps(ImageSize, Parameters, 'VocFreqs', R, VocStartFrame, '1', P.WindowSize, 0, Parameters.VocFreqs);
    %% Summary picture
    
    % Maximum Texture Response
@@ -118,7 +118,7 @@ checkField(P, 'WindowSize', 5);
    
    % vocalisation offset reponse
    
-   [T.VocResp.OffsetSil, Data.OffsetVocSil] = calcRespMaps(ImageSize, Parameters, 'Par', R, VocStartFrame, 1, 50, 1);
+   [T.VocResp.OffsetSil, Data.OffsetVocSil] = calcRespMaps(ImageSize, Parameters, 'Par', R, VocStartFrame, 1, 50, 1, Parameters.VocFreqs);
 
 
    % sound offset response
@@ -132,7 +132,7 @@ checkField(P, 'WindowSize', 5);
        VocStartFrame(oddindex) = (2+Parameters.PreTimes(oddindex))*P.FR;
        TrialNums = GetTrialNums(Parameters.Corrs, Parameters.Vars, Parameters.Reals, R.General, 0, Parameters.NTrials, Parameters.PreTimes(oddindex), Parameters.VocFreqs);
        TexBaseline = squeeze(mean(R.Frames.AvgTime(:, :, :, TrialNums), 4));
-       [AvgMovMed, T.OffsetResp, Data.OffsetResp(:, :, :, i)] = calcPeakSize(AvgMovMed, T.OffsetResp, FunCal, ImageSize, VocStartFrame(oddindex), TexBaseline, 50, oddindex, R);              
+       [AvgMovMed, T.OffsetResp, Data.OffsetResp(:, :, :, i)] = calcPeakSize(AvgMovMed, FunCal, ImageSize, VocStartFrame(oddindex), TexBaseline, 50, R, 0);              
        Data.OffsetResp(:, :, :, i+1) = AvgMovMed;
     end   
    
