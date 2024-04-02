@@ -7,7 +7,7 @@ checkField(P, 'Recordings', [201, 130, 193]);
 checkField(P, 'Corr', 1);
 
 PreTrans = struct;
-
+%rescaling images
 AnimalNum = length(P.Animals);
 for Animal = 1:AnimalNum
     Data = load(['/home/experimenter/dnp-backup/ControllerData/mouse', num2str(P.Animals(Animal)), '/R', num2str(P.Recordings(Animal)), '/Results/M.mat']);
@@ -25,7 +25,7 @@ for Animal = 1:AnimalNum
 end
 MetricNum = length(MetricNames);
 
-
+%Reference to map transformed images onto
 Ref = imref2d(size(PreTrans.(['mouse', num2str(P.Animals(1))]).(MetricNames{1})));
 
 
