@@ -8,7 +8,7 @@ checkField(P, 'Corrs', [0, 0.8]);
 checkField(P, 'Vars', [0.02, 0.2, 0.4]);
 checkField(P, 'FR', 100);
 checkField(P, 'WindowSize', 5);
-checkField(P, 'IntAfterAvg', 1)
+checkField(P, 'IntPreAvg', 1)
 checkField(P, 'Mean', 1) % 1 for mean 0 for median
 checkField(P, 'Save', 0)
 checkField(P, 'Source', 'VideoCalcium')
@@ -58,7 +58,7 @@ checkField(P, 'AllVocs', 0)
         end
     end
     fprintf('\nAveraging data');
-    if P.IntAfterAvg
+    if P.IntPreAvg
         if P.Mean
             T.VocResp.PreTime = squeeze(mean(mean(mean(mean(T.VocResp.FullResp, 3), 4), 5), 6));
             T.VocResp.Corrs = squeeze(mean(mean(mean(T.VocResp.FullResp, 4), 5), 6));
@@ -72,14 +72,14 @@ checkField(P, 'AllVocs', 0)
             T.VocResp.Reals = squeeze(median(median(median(T.VocResp.FullResp, 3), 4), 6));
             T.VocResp.VocFreqs = squeeze(median(median(median(T.VocResp.FullResp, 3), 4), 5));
         end            
-        Params = {'Corrs', 'Vars', 'Reals', 'VocFreqs'};
-        for i = 1:numel(Params)
-            % Get the size of the original array
-            originalSize = size(T.VocResp.(Params{i}));
-
-            % Reshape the array
-            T.VocResp.(Params{i}) = reshape(T.VocResp.(Params{i}), [originalSize(1), originalSize(2), prod(originalSize(3:4))]);
-        end
+%         Params = {'Corrs', 'Vars', 'Reals', 'VocFreqs'};
+%         for i = 1:numel(Params)
+%             % Get the size of the original array
+%             originalSize = size(T.VocResp.(Params{i}));
+% 
+%             % Reshape the array
+%             T.VocResp.(Params{i}) = reshape(T.VocResp.(Params{i}), [originalSize(1), originalSize(2), prod(originalSize(3:4))]);
+%         end
     else
         T.VocResp.PreTime = zeros([ImageSize(1), ImageSize(2), numel(Parameters.PreTimes)-1]);
         T.VocResp.Corrs = zeros([ImageSize(1), ImageSize(2), numel(Parameters.Corrs), numel(Parameters.PreTimes)-1]);

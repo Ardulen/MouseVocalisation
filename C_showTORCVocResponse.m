@@ -42,6 +42,8 @@ classdef C_showTORCVocResponse < handle
         checkField(P, 'WindowSize', 5);
         checkField(P, 'Offset', [0.20, 0.25])
         
+        
+        
         O.Xoffset = P.Offset(1);
         O.Yoffset = P.Offset(2);
         O.NTrials = size(R.Frames.AvgTime,4);
@@ -49,6 +51,8 @@ classdef C_showTORCVocResponse < handle
         O.T = T;
         O.General = R.General;
         O.P = P;
+        O.P.Animal = R.Parameters.Animal;
+        O.P.Recording = R.Parameters.Recording;
         if P.CranMask
             O.CraniotomyMask = R.Frames.CraniotomyMask;
         else    
@@ -108,7 +112,7 @@ classdef C_showTORCVocResponse < handle
         O.T.SilVocAvg = mean(O.T.VocResp.Sil, 3);
         O.T.FullVocAvg = mean(O.T.VocResp.PreTime, 3);
         O.T.OffsetSilAvg = mean(O.T.VocResp.OffsetSil, 3);
-        O.T.OffsetAvg = mean(O.T.OffsetResp, 3);
+        O.T.OffsetAvg = O.T.Summary.OffsetResp;
         FirstTrialVocResp = zeros([O.ImageSize(1), O.ImageSize(2), 390, 10]);
         FirstTrialVocRespSil = zeros([O.ImageSize(1), O.ImageSize(2), 390, 10]);
         LastTrialVocResp = zeros([O.ImageSize(1), O.ImageSize(2), 390, 10]);
@@ -218,16 +222,16 @@ classdef C_showTORCVocResponse < handle
         end 
         
         function plotSumMaps(O)
-            Clims = O.GetClims(O.T.TexResp, [95, 5]);
-            O.plotMaps("TexResp", O.T.TexResp, 'Change Norm (%)', Clims, O.LineColors(1, :), 1, 'Texture Response', 'jet', 1, 1);
+            Clims = O.GetClims(O.T.Summary.TexResp, [95, 5]);
+            O.plotMaps("TexResp", O.T.Summary.TexResp, 'Change Norm (%)', Clims, O.LineColors(1, :), 1, 'Texture Response', 'jet', 1, 1);
             Clims = O.GetClims(O.T.FullVocAvg, [95, 5]);
             O.plotMaps('AvgVocResp', O.T.FullVocAvg, 'Area of peak', Clims, 'k', 2, 'Texture Voc resp', 'jet', 1, 2)
             Clims = O.GetClims(O.T.SilVocAvg, [95, 5]);
             O.plotMaps('AvgVocResp', O.T.SilVocAvg, 'Area under peak', Clims, 'k', 3, 'Silent Voc resp', 'jet', 1, 3)
-            Clims = O.GetClims(O.T.SusLvl, [95, 5]);
-            O.plotMaps("SusLvl", O.T.SusLvl, 'Change Norm (%)', Clims, O.LineColors(2, :), 4, 'Sustained Level', 'jet', 1, 4);
-            Clims = O.GetClims(O.T.FitDecMap, [95, 5]);
-            O.plotMaps("FitDec", O.T.FitDecMap, 'Tau', Clims, O.LineColors(2, :), 5, 'Decay constant', 'jet', 1, 5);
+            Clims = O.GetClims(O.T.Summary.SusLvl, [95, 5]);
+            O.plotMaps("SusLvl", O.T.Summary.SusLvl, 'Change Norm (%)', Clims, O.LineColors(2, :), 4, 'Sustained Level', 'jet', 1, 4);
+            Clims = O.GetClims(O.T.Summary.FitDecMap, [95, 5]);
+            O.plotMaps("FitDec", O.T.Summary.FitDecMap, 'Tau', Clims, O.LineColors(2, :), 5, 'Decay constant', 'jet', 1, 5);
             Clims = O.GetClims(O.T.OffsetSilAvg, [95, 5]);
             O.plotMaps("OffSetSilAvg", O.T.OffsetSilAvg, 'Avg Area of peak', Clims, 'k', 6, 'Voc offset resp', 'jet', 1, 6);
             Clims = O.GetClims(O.T.OffsetAvg, [95, 5]);
