@@ -1,9 +1,18 @@
 function D = CalcVocRespPerTrial(R, varargin)
-% Graph 
+% Calculates the difference between the texture response and the
+% vocalization response for each pixel by taking the difference between a
+% particular trial and all trials of the highest pretime and same texture
+% stimulation as that particular trial and averaging those. This results in
+% a average difference GRAPH for each pixel for each trial of all but the
+% highest pretime.
 % Input: R which is the output of computewidefield
-% Output: -D.WholeVocResp the area under the graph during either all 10
-% Vocalization periods or the first (AllVocs) 
-
+% Output: -D.WholeVocResp,  the area under the GRAPH during either all 10
+% Vocalization periods or the first (AllVocs 1 or 0) 8dims (X, Y, Corr, Var, Real, Rep, PreTime, VocFreq) 
+%         -D.OnOffset,  area under the graph during vocalizations - area
+%         under the graph during the offset period between vocalizations 8dims (X, Y, Corr, Var, Real, Rep, PreTime, VocFreq) 
+%         -D.RegionMasks, The masks for each trial that contains all pixels
+%         above Zscore 5Dims (X, Y, All other Parameters, PreTime,
+%         VocFreqs)
 P = parsePairs(varargin);
 checkField(P, 'Mean', 1)
 checkField(P, 'VocFreqs', [])
