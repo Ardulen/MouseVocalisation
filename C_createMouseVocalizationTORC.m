@@ -11,6 +11,7 @@ checkField(P,'Path',[]); % Alternative Path for saving
 checkField(P,'Parameters',[]);
 checkField(P,'Verbose',0);
 
+
 % SET PATHS
 if isempty(P.Path)
     P.Path = which('C_createMouseVocalization');
