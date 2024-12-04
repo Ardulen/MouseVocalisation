@@ -9,7 +9,7 @@ AnimalNum = numel(P.Animals);
 NoiseBurstRecordings = containers.Map({'mouse193', 'mouse195', 'mouse196'}, {'R4', 'R4', 'R3'});
 
 Colors = [0.5, 0, 0.5;0.7, 0.3, 0.7;0.85, 0.6, 0.85];
-Yellow = [1.0000, 1.0000, 0.6000;1.0000, 0.8500, 0.2000;0.8500, 0.6500, 0.1250;0.75, 0.55, 0.05];
+Yellow = [1.0000, 0.85, 0.2]; %;1.0000, 0.8500, 0.2000;0.8500, 0.6500, 0.1250;0.75, 0.55, 0.05];
 
 
 for i =1:AnimalNum
@@ -66,13 +66,13 @@ legend('Position', [0.18, 0.52, 0.1, 0.1], 'FontSize', 6)
 
 
 subplot(2, 3, 5)
-d = violinplots(Plot.Strength, P.PreTimes, 'ViolinColor', Yellow);
+d = violinplot(Plot.Strength, P.PreTimes, 'ViolinColor', Yellow);
 title(['Response Strength'])
 xlabel('PreTime (s)')
 ylabel('AUG DF/F')
 
 subplot(2, 3, 6)
-d = violinplots(Plot.Size./(35.3 ^ 2), P.PreTimes, 'ViolinColor', Yellow);
+d = violinplot(Plot.Size./(35.3 ^ 2), P.PreTimes, 'ViolinColor', Yellow);
 title('Response Size')
 xlabel('PreTime (s)')
 ylabel('mm²')

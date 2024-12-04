@@ -9,7 +9,6 @@ checkField(P, 'Color', 'Turq')
 
 
 AnimalNum = numel(P.Animals);
-Ref = 
 D = struct;
 
 Blue = [0.6, 0.8, 1.0;  % Light Blue
@@ -52,7 +51,7 @@ for i = 1:AnimalNum
     hold on
     for j = 1:numel(P.Params)
         Mask = HF_SignFilterImage(Summary.(P.Params{j}), 'SelectionMethod','zscore', 'zscoreThresh',P.Zscore(j));
-        TransMask = imwarp(Moving,tfs.(P.Animals{Animal}),"OutputView",Ref);
+        %TransMask = imwarp(Moving,tfs.(P.Animals{Animal}),"OutputView",Ref);
         Masks.(P.Params{j}) = Mask;
         bounds = bwboundaries(Mask');
         MaskSize.(P.Animals{i})(j) = sum(Mask(:))/(35.3 ^ 2);

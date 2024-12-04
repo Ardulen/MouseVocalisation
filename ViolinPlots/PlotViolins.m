@@ -250,7 +250,7 @@ end
 
 function MultComp = multplots(P, PlotNum, DatNum, Dat, xlab, ylab)    
     subplot(3, 3, PlotNum)
-    d = violinplots(squeeze(P.TotVioData.(Dat)(:, :, DatNum)), P.Params, 'ViolinColor', P.ColMat(:, :, DatNum));
+    d = violinplot(squeeze(P.TotVioData.(Dat)(:, :, DatNum)), P.Params, 'ViolinColor', P.ColMat(1, :, DatNum));
     title([num2str(P.VocFreqs(DatNum)), ' Hz'])
     xlabel(xlab)
     ylabel(ylab)
@@ -264,7 +264,7 @@ end
 
 function Comp = SinglePlot(P, PlotNum, Dat, xlab, ylab, Params, Title)
     subplot(3, 1, PlotNum)
-    d = violinplots(Dat, Params);
+    d = violinplot(Dat, Params);
     title(Title)
     xlabel(xlab)
     ylabel(ylab)
