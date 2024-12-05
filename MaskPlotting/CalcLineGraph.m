@@ -37,21 +37,21 @@ set(gcf, 'Color', 'w')
 clf;
 for i = 1:AnimalNum
     subplot(2, 3, i)    
-    axis equal
     set(gca, 'Ydir', 'reverse')
-    axis off
     load(['/mnt/data/Samuel/', P.Animals{i}, '/Summary.mat'])
+    ImageSize = size(Summary.(P.Params{1}));
+    Ref = imref2d(ImageSize);
     Average = load(['/mnt/data/Samuel/', P.Animals{i}, '/AverageRaw.mat']);
-    if i>1
-        load(['mnt/data/Samuel/', P.Animals{i}, '/Tf.mat']);
-    end
+    load(['mnt/data/Samuel/', P.Animals{i}, '/Tf.mat']);
     D.(P.Animals{i}) = Summary;
     imagesc(Average.D')
     colormap('bone')
     hold on
     for j = 1:numel(P.Params)
-        Mask = HF_SignFilterImage(Summary.(P.Params{j}), 'SelectionMethod','zscore', 'zscoreThresh',P.Zscore(j));
-        %TransMask = imwarp(Moving,tfs.(P.Animals{Animal}),"OutputView",Ref);
+        TransMap = imwarp(Summary.(P.Params{j}),Tf,"OutputView",Ref);
+        %Mask = HF_SignFilterImage(Summary.(P.Params{j}), 'SelectionMethod','zscore', 'zscoreThresh',P.Zscore(j));
+        Mask = HF_SignFilterImage(TransMap, 'SelectionMethod','zscore', 'zscoreThresh',P.Zscore(j));
+
         Masks.(P.Params{j}) = Mask;
         bounds = bwboundaries(Mask');
         MaskSize.(P.Animals{i})(j) = sum(Mask(:))/(35.3 ^ 2);
@@ -62,6 +62,9 @@ for i = 1:AnimalNum
     end
     OverlapMask = Masks.(P.Params{1}) & Masks.(P.Params{2});
     MaskSize.(P.Animals{i})(j+1) = sum(OverlapMask(:))/(35.3 ^ 2);
+    axis('off')
+    set(gca, 'YDir','reverse','DataAspectRatio',[1,1,1])
+    
 end
 
 
