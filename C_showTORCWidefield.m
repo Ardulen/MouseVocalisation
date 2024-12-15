@@ -75,6 +75,8 @@ classdef C_showTORCWidefield < handle
       else    
         O.CraniotomyMask = O.createCranMask;
       end
+      O.P.Animal = R.General.Parameters.General.Animal;
+      O.P.Recording = R.General.Parameters.General.Recording;
       %% Set figure
       MP = get(0,'MonitorPositions');
       NY = MP(1,end); HPixels = 540;

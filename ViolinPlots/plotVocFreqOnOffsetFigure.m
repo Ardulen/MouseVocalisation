@@ -49,15 +49,15 @@ function VioAndTrace(P, Ax, bAx, Plot, AHTops, AHBots)
     xlabel('Time (s)')
 
     axes(AHBots(bAx))
-    d = violinplots(Plot.VocFreqs, P.VocFreqs);
+    d = violinplot(Plot.VocFreqs, P.VocFreqs);
     title(['Response Strength'])
-    xlabel('PreTime (s)')
+    xlabel('Vocalization Frequency (Hz)')
     ylabel('AUG DF/F')
 
     axes(AHBots(bAx+1))
-    d = violinplots(Plot.OnOffset, P.VocFreqs);
+    d = violinplot(Plot.OnOffset, P.VocFreqs);
     title('Onset-Offset')
-    xlabel('PreTime (s)')
+    xlabel('Vocalization Frequency (Hz)')
     ylabel('AUG DF/F')
 end
 

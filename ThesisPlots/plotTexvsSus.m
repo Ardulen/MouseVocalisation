@@ -8,7 +8,7 @@ checkField(P, 'Zscore', [2, -2])
 checkField(P, 'Area', 'ACX')
 checkField(P, 'ScaleBarSize', 8)
 checkField(P, 'ScaleBarSep', 7)
-
+checkField(P, 'Save', 0)
 
 P.Measures = {[P.Variable{1}, 'Resp'], [P.Variable{2}, 'Lvl']};%necassary because of slightly different naming in saved data
 
@@ -20,7 +20,7 @@ Orange = [0.8, 0.3, 0;1, 0.5, 0;1, 0.6, 0.2];
 Blue = [0, 0, 0.7;0, 0, 1;0.3, 0.3, 1];
 P.CombiColors = cat(3, Orange, Blue);
 P.GreyColors = [0.1, 0.1, 0.1;0.3, 0.3, 0.3;0.5, 0.5, 0.5];
-P.AnimalColors = [0.7, 0.2, 0.4;0.6, 0.5, 0.7;0.6, 0.7, 0.3];
+P.AnimalColors = [0.9, 0.7, 0;0, 0.7, 0.5;0.6, 0.0, 0.1];
 P.AnimalNum = numel(P.Animals);
 
 MP = get(0,'MonitorPositions');
@@ -44,16 +44,16 @@ for i = 1:2
 end
 %% Plot transformed Masks
 
-load('/mnt/data/Samuel/Global/Transformed.mat')
 
-Animal = P.Animals{1};
-ImageSize = size(TransImages.(Animal).TexResp);
 for i = 1:P.AnimalNum
     Animal = P.Animals{i};
     load(['/home/experimenter/dnp-backup/ControllerData/',Animal, '/', VocalizationRecordings(Animal), '/Results/M.mat'])
     P.Background.(Animal) = M.Image.AnatomyFrame;
     P.PixelPerMM.(Animal) = M.Image.PixelPerMM;
 end
+ImageSize = size(P.Background.(P.Animals{1}));
+P.Y = ImageSize(2);
+P.PMM = P.PixelPerMM.(P.Animals{1});
 
 [MaskSize, ~] = plotContourMaps(P, AHTop);
 
@@ -69,7 +69,16 @@ Map = M.Metrics.Median.OnsetLatency;
 Mask = HF_SignFilterImage(Map', 'SelectionMethod','zscore', 'zscoreThresh', -1, 'ForceSingleRegion', 1, 'MaskExpand', 1);
 LowLatency = imresize(Mask, ImageSize);
 
-plotCombinedMaps(P, AHBottom(1), ImageSize, ACX, LowLatency)
+for i = 1:P.AnimalNum
+    Animal = P.Animals{i};
+    load(['/mnt/data/Samuel/', Animal, '/Summary.mat'])
+    Maps.(Animal) = Summary;
+end
+
+P.MaskGen = 1;
+P.Legend = 1;
+P.ScaleBar = 1;
+plotCombinedMaps(P, AHBottom(1), Maps, ImageSize, ACX, LowLatency, [0.35, 0.07, 0.1, 0.1])
 
 
 
@@ -77,4 +86,7 @@ plotCombinedMaps(P, AHBottom(1), ImageSize, ACX, LowLatency)
 
 Labels = {'Texture', 'Sustained Level', 'Overlap'};
 plotLineGraph(P, AHBottom(2), Labels, MaskSize)
-  
+
+if P.Save
+    save('/mnt/data/Samuel/Global/TexSusMaskSize.mat', 'MaskSize')
+end

@@ -6,7 +6,7 @@ for j = 1:P.AnimalNum
     load(['/mnt/data/Samuel/', Animal, '/Summary.mat'])
     ImageSize = size(Summary.(P.Measures{1}));
     Ref = imref2d(ImageSize);
-    load(['mnt/data/Samuel/', Animal, '/Tf.mat']);
+    load(['/mnt/data/Samuel/', Animal, '/Tf.mat']);
     imagesc(cAH, P.Background.(Animal)')
     colormap('bone')
     hold(cAH, 'on')
@@ -27,4 +27,7 @@ for j = 1:P.AnimalNum
     axis(cAH, 'off')
     set(cAH,'YDir','reverse','DataAspectRatio',[1,1,1])
     title(cAH, Animal)
+    if j == 1
+        plotScaleBars(P, 'w', cAH, 20, P.Y-18, 1)
+    end
 end

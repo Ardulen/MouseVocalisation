@@ -1,4 +1,4 @@
-function [Time, Frequency, Plot]= PlotViolins(TimeVec, varargin)
+function [Time, Frequency, Plot]= PlotViolins(varargin)
 
 P = parsePairs(varargin);
 checkField(P, 'Save', 0)
@@ -47,7 +47,7 @@ else
     end
 end
 
-
+load('/mnt/data/Samuel/Global/TimeVec.mat')
 
 
 for j = 1:VariableNum

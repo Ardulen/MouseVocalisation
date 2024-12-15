@@ -7,7 +7,7 @@ checkField(P, 'Zscore', [2, 2])
 checkField(P, 'Area', 'ACX')
 checkField(P, 'ScaleBarSize', 8)
 checkField(P, 'ScaleBarSep', 7)
-
+checkField(P, 'Save', 0)
 
 P.Measures = {[P.Variable{1}, 'Resp'], [P.Variable{2}, 'VocResp']};%necassary because of slightly different naming in saved data
 
@@ -20,7 +20,7 @@ Orange = [0.8, 0.3, 0;1, 0.5, 0;1, 0.6, 0.2];
 Green = [0, 0.3, 0;0, 0.5, 0;0.2, 0.8, 0.2];
 P.CombiColors = cat(3, Orange, Green);
 P.GreyColors = [0.1, 0.1, 0.1;0.3, 0.3, 0.3;0.5, 0.5, 0.5];
-P.AnimalColors = [0.7, 0.2, 0.4;0.6, 0.5, 0.7;0.6, 0.7, 0.3];
+P.AnimalColors = [0.9, 0.7, 0;0, 0.7, 0.5;0.6, 0.0, 0.1];
 P.AnimalNum = numel(P.Animals);
 
 MP = get(0,'MonitorPositions');
@@ -88,21 +88,25 @@ for i = 1:numel(P.Variable)
     plot(cAH, TimeVec-2, 100*Resp, 'LineWidth', 2, 'Color', P.Colors(i, :), 'DisplayName', Leg{i})
 end
 
-xlim(cAH, [-0.5, 3])
+xlim(cAH, [-0.5, 2.5])
 ylim(cAH, Lims)
 ylabel(cAH, 'DF/F')
 xlabel(cAH, 'Time(s)')
-legend(cAH, 'FontSize', 7, 'Location', 'East')
+legend(cAH, 'FontSize', 6, 'Position', [0.82, 0.835, 0.05, 0.05])
 title(cAH, 'Average response over ACX')
+cAH.FontSize = 8;
 %% Plot transformed Masks
 
-Animal = P.Animals{1};
+
 for i = 1:P.AnimalNum
     Animal = P.Animals{i};
     load(['/home/experimenter/dnp-backup/ControllerData/',Animal, '/', VocalizationRecordings(Animal), '/Results/M.mat'])
     P.Background.(Animal) = M.Image.AnatomyFrame;
     P.PixelPerMM.(Animal) = M.Image.PixelPerMM;
 end
+ImageSize = size(P.Background.(P.Animals{1}));
+P.Y = ImageSize(2);
+P.PMM = P.PixelPerMM.(P.Animals{1});
 
 [MaskSize, ~] = plotContourMaps(P, AHMiddle);
 
@@ -112,14 +116,22 @@ end
 Animal = P.Animals{1};
 load(['/home/experimenter/dnp-backup/ControllerData/', Animal,'/', NoiseBurstRecordings(Animal), '/Results/evaluateNoiseBurst.mat']);
 Mask = M.FilteredMetrics.SelPix.ACX;
-ImageSize = size(P.Background.(Animal));
 ACX = imresize(Mask, ImageSize);
 
 Map = M.Metrics.Median.OnsetLatency;
 Mask = HF_SignFilterImage(Map', 'SelectionMethod','zscore', 'zscoreThresh', -1, 'ForceSingleRegion', 1, 'MaskExpand', 1);
 LowLatency = imresize(Mask, ImageSize);
 
-plotCombinedMaps(P, AHBottom(1), ImageSize, ACX, LowLatency)
+for i = 1:P.AnimalNum
+    Animal = P.Animals{i};
+    load(['/mnt/data/Samuel/', Animal, '/Summary.mat'])
+    Maps.(Animal) = Summary;
+end
+
+P.MaskGen = 1;
+P.Legend = 1;
+P.ScaleBar = 1;
+plotCombinedMaps(P, AHBottom(1), Maps, ImageSize, ACX, LowLatency, [0.35, 0.05, 0.1, 0.1])
 
 
 
@@ -128,6 +140,6 @@ plotCombinedMaps(P, AHBottom(1), ImageSize, ACX, LowLatency)
 Labels = {'Texture', 'Vocalization', 'Overlap'};
 plotLineGraph(P, AHBottom(2), Labels, MaskSize)
   
-
-
-
+if P.Save
+    save('/mnt/data/Samuel/Global/TexSilMaskSize.mat', 'MaskSize')
+end
