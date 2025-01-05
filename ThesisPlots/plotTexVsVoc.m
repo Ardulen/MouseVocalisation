@@ -1,4 +1,4 @@
-function plotVocvsSilent(varargin)
+function plotTexVsVoc(varargin)
 P = parsePairs(varargin);
 checkField(P, 'Animals', {'mouse193', 'mouse195', 'mouse196'})
 checkField(P, 'Variable', {'Tex', 'Sil'})
@@ -8,6 +8,7 @@ checkField(P, 'Area', 'ACX')
 checkField(P, 'ScaleBarSize', 8)
 checkField(P, 'ScaleBarSep', 7)
 checkField(P, 'Save', 0)
+checkField(P, 'FigSave', 1)
 
 P.Measures = {[P.Variable{1}, 'Resp'], [P.Variable{2}, 'VocResp']};%necassary because of slightly different naming in saved data
 
@@ -37,12 +38,12 @@ set(gcf, 'Color', 'w')
 
 Letters = {'B','C','D','E','F'};
 
-annotation('textbox', [0.005, 0.85, 0.1, 0.1], 'String', 'A', 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
+annotation('textbox', [0.005, 0.86, 0.1, 0.1], 'String', 'A', 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
 for i = 1:3
-    annotation('textbox', [0.005+0.33*(i-1), 0.6, 0.1, 0.1], 'String', Letters{i}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
+    annotation('textbox', [0.005+0.33*(i-1), 0.62, 0.1, 0.1], 'String', Letters{i}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
 end
 for i = 1:2
-    annotation('textbox', [0.005+0.5*(i-1), 0.29, 0.1, 0.1], 'String', Letters{i+3}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
+    annotation('textbox', [0.005+0.5*(i-1), 0.31, 0.1, 0.1], 'String', Letters{i+3}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
 end
 %% plotTotalVocAreaResp
 
@@ -91,7 +92,7 @@ end
 xlim(cAH, [-0.5, 2.5])
 ylim(cAH, Lims)
 ylabel(cAH, 'DF/F')
-xlabel(cAH, 'Time(s)')
+xlabel(cAH, 'Time (s)')
 legend(cAH, 'FontSize', 6, 'Position', [0.82, 0.835, 0.05, 0.05])
 title(cAH, 'Average response over ACX')
 cAH.FontSize = 8;
@@ -131,6 +132,8 @@ end
 P.MaskGen = 1;
 P.Legend = 1;
 P.ScaleBar = 1;
+P.DispNames = {'Texture', 'Vocalization'};
+P.MaskSize = 1;
 plotCombinedMaps(P, AHBottom(1), Maps, ImageSize, ACX, LowLatency, [0.35, 0.05, 0.1, 0.1])
 
 
@@ -142,4 +145,9 @@ plotLineGraph(P, AHBottom(2), Labels, MaskSize)
   
 if P.Save
     save('/mnt/data/Samuel/Global/TexSilMaskSize.mat', 'MaskSize')
+end
+
+if P.FigSave
+    set(Fig, 'PaperPositionMode', 'auto'); % Maintain on-screen size
+    print(Fig, '/mnt/data/Samuel/ThesisPlots/VocvsTex.png', '-dpng', '-r300'); % Save as PNG with 300 DPI
 end

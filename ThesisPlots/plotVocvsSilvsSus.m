@@ -8,7 +8,8 @@ checkField(P, 'FIG', 300)
 checkField(P, 'Zscore', [2, -2, 2])
 checkField(P, 'Area', 'ACX')
 checkField(P, 'ScaleBarSize', 8)
-checkField(P, 'ScaleBarSep', 7)
+checkField(P, 'ScaleBarSep', 8)
+checkField(P, 'Save', 0)
 
 VocalizationRecordings = containers.Map({'mouse193', 'mouse195', 'mouse196'}, {'R201', 'R130', 'R193'});
 
@@ -30,16 +31,16 @@ FigureName = 'Vocalization versus Texture';
 set(P.FIG,'name', FigureName, 'Color',[1,1,1],'Position',[5,NY-HPixels-60, 1100, HPixels]);
 set(gcf, 'Color', 'w')
 
-[~,AHTop] = axesDivide([0.2, 0.2, 0.2, 0.3],1,[0.05, 0.6, 0.9, 0.35],[0.1, 0.1, 0.1],[], 'c');
-[~,AHBottom] = axesDivide(3,1,[0.05, 0.05, 1, 0.5],[0.2, 0.2, 0.2],[], 'c');
+[~,AHTop] = axesDivide([0.2, 0.2, 0.2, 0.3],1,[0.05, 0.6, 0.94, 0.35],[0.1, 0.1, 0.1],[], 'c');
+[~,AHBottom] = axesDivide(3,1,[0.05, 0.05, 1, 0.46],[0.2, 0.2, 0.2],[], 'c');
 
 
 Letters = {'A','B','C','D','E', 'F', 'G'};
 
 for i = 1:3
-    annotation('textbox', [0.005+0.225*(i-1), 0.9, 0.1, 0.1], 'String', Letters{i}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
+    annotation('textbox', [0.005+0.235*(i-1), 0.92, 0.1, 0.1], 'String', Letters{i}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
 end
-annotation('textbox', [0.67, 0.9, 0.1, 0.1], 'String', Letters{4}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
+annotation('textbox', [0.695, 0.92, 0.1, 0.1], 'String', Letters{4}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
 for i = 1:3
     annotation('textbox', [0.005+0.33*(i-1), 0.5, 0.1, 0.1], 'String', Letters{i+4}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
 end
@@ -59,12 +60,20 @@ for i = 1:P.AnimalNum
     P.PixelPerMM.(Animal) = M.Image.PixelPerMM;
 end
 
+
+
 P.PMM = P.PixelPerMM.(P.Animals{1});
 P.Y = size(P.Background.(P.Animals{1}), 2);
-
+P.DispNames = {'Vocalization', 'Sustained Level', 'Vocalization in Noise'};
+hold(AHTop(1), 'on')
+for i = 1:numel(P.DispNames)
+    area(AHTop(1), 0, 0, 'FaceColor', P.Colors(i, :), 'EdgeColor', 'none', 'DisplayName', P.DispNames{i}, 'ShowBaseLine', 'off', 'FaceAlpha', 0.5)
+end
+legend(AHTop(1), 'FontSize', 6, 'Position', [0.19, 0.6, 0.1, 0.1])
 
 [MaskSize, Masks] = plotContourMaps(P, AHTop);
-plotScaleBars(P, 'w', AHTop(1), 20, P.Y-18, 1)
+%plotScaleBars(P, 'w', AHTop(1), 20, P.Y-18, 1)
+
 
 %% Plot Sizes
 
@@ -90,7 +99,7 @@ for q = 1:P.AnimalNum
 end
 
 X = [2, 6, 10];
-
+ylabel(AHBottom(1), 'mm^2')
 for i = 1:numel(P.Measures)
     cAH = AHBottom(i);
     hold(cAH, 'on')
@@ -104,7 +113,7 @@ for i = 1:numel(P.Measures)
     
 
    
-    ylabel(cAH, 'mm^2')
+    
     xticks(cAH, [2, 6, 10]);
     xlim(cAH, [0, 12])
     ylim(cAH, [0, 1.3])
@@ -112,6 +121,7 @@ for i = 1:numel(P.Measures)
     cAH.FontSize = 8;
     cAH.XAxis.FontSize = 7;
 end
+title(AHBottom(2), 'Area Sizes')
 legend(AHBottom(1), P.Animals, 'FontSize', 6, 'Location', 'SouthWest')
 
 %% plot overlap bar plot
@@ -156,4 +166,11 @@ ylabel(cAH, 'Overlap (%)')
 legend(cAH, 'FontSize', 6, 'Location', 'northwest')
 xticks(cAH, BPos);
 xticklabels(cAH, Combs)
+title(cAH, 'Relative Overlap')
 cAH.FontSize = 8;
+
+if P.Save
+    set(Fig, 'PaperPositionMode', 'auto'); % Maintain on-screen size
+    print(Fig, '/mnt/data/Samuel/ThesisPlots/VocvsSusvsVocNoise.png', '-dpng', '-r300'); % Save as PNG with 300 DPI
+end
+

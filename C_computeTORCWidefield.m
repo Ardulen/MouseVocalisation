@@ -1,16 +1,11 @@
 function [TrialAvg, TORCNoiseSignal, T] = C_computeTORCWidefield(R, varargin)
     P = parsePairs(varargin);
     checkField(P,'CLim','Auto')
-    checkField(P,'ROI',[1.14, 1.77, 0.2]); % [centerX centerY radius] in mm
     checkField(P,'Threshold',100)
     checkField(P,'FIG',1);
-    checkField(P,'Lens','Nikon4X') % Usually set automatically by the Setup
-    checkField(P,'FOV2PAngle',38); % Set the  Angle at which the 2P Field-Of-View is rotated
-    checkField(P,'FOV2PSize',[0.8,0.8]); % Set the Size of the 2P Field-Of-View
     checkField(P,'Source','VideoCalcium'); % Choose the Source of the Data
     checkField(P, 'FR', 100);
-    checkField(P,'Trials',[]); % Choose the Source of the Data
-    checkField(P, 'Pl', [1, 3, 4, 6]); %dicides which parameters are shown
+    checkField(P, 'Pl', [1, 3, 4, 6]); %decides which parameters are shown
     checkField(P, 'Corrs', [0, 0.8]);
     checkField(P, 'Vars', [0.02, 0.2, 0.4]);
     checkField(P, 'Pretimes', [3, 5]);

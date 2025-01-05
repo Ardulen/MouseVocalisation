@@ -1,8 +1,6 @@
 function [T, P, M] = C_computeTORCVOCindividualBaselineWidefield(R, varargin)
 
 P = parsePairs(varargin);
-checkField(P,'Animal'); 
-checkField(P,'Recording'); 
 checkField(P, 'Trials', 'All');
 checkField(P, 'Corrs', [0, 0.8]);
 checkField(P, 'Vars', [0.02, 0.2, 0.4]);
@@ -25,6 +23,9 @@ checkField(P, 'AllVocs', 0)
     Parameters.PreTimes = R.General.Paradigm.Stimulus.Parameters.DurContext.Value;
     Parameters.VocFreqs = R.General.Paradigm.Stimulus.Parameters.VocalFrequencies.Value;
     Parameters.VocFreqsSil = R.General.Paradigm.Stimulus.Parameters.VocalFrequencies.Value;
+    
+    P.Animal = R.General.Parameters.General.Animal;
+    P.Recording = R.General.Parameters.General.Recording;
     
     fprintf('\n');
     VocStartFrame = zeros(1, length(Parameters.PreTimes)); 

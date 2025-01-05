@@ -14,5 +14,6 @@ xticks(cAH, [2, 6, 10]);
 xlim(cAH, [0, 12])
 ylim(cAH, [0, 1.3])
 xticklabels(cAH, Labels)
+title(cAH, 'Area Sizes')
 legend(cAH, P.Animals, 'FontSize', 6, 'Location', 'southwest')
 cAH.FontSize = 8;

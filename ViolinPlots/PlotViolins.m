@@ -118,11 +118,9 @@ clf
 
 
 Frequency.SignifTest =  SinglePlot(P, 1, squeeze(P.TotVioData.Freqs(:, :, 1)), '', 'AUG DF/F', P.VocFreqs, ['AUG Vocalization Response in ', P.Area]);
-text(2.985, 73, '*', 'FontSize', 20, 'Color', 'k');
 Frequency.ResponseRegionSize =  SinglePlot(P, 2, squeeze(P.TotVioData.Freqs(:, :, 2)), '', 'Pixels', P.VocFreqs, ['Size of area containing pixels with values at least 2 std from mean']);
-text(2.985, 130, '*', 'FontSize', 20, 'Color', 'k');
 Frequency.Threshold =  SinglePlot(P, 3, squeeze(P.TotVioData.Freqs(:, :, 3)), '', 'Pixels', P.VocFreqs, ['Size of area containing pixels above ', num2str(P.Threshold), ' DF/F']);
-text(0.985, 1022, '*', 'FontSize', 20, 'Color', 'k');
+
 
 if P.Silence
     P.TotVioData.OnOff = reshape(P.TotVioData.OnOffsetAvg, [120, 3]);
@@ -243,6 +241,8 @@ Plot.VocFreqs = P.TotVioData.Freqs(:, :, 1);
 Plot.OnOffset = P.TotVioData.OnOff;
 Plot.Trial = P.TotVioData.TrialAvg;
 Plot.TimeVec = TimeVec;
+Plot.Comp.SignifTest = Frequency.SignifTest;
+Plot.Comp.OnOffset = Frequency.OnOffset;
 end
 
 

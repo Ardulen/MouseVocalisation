@@ -1,4 +1,4 @@
-function plotVocFreqsMasks(Plot, varargin)
+function plotVocPretime(Plot, varargin)
 
 P = parsePairs(varargin);
 checkField(P, 'Animals', {'mouse193', 'mouse195', 'mouse196'})
@@ -8,6 +8,7 @@ checkField(P, 'ScaleBarSize', 6)
 checkField(P, 'ScaleBarSep', 8)
 checkField(P, 'VocFreqs', [4000, 8000, 32000])
 checkField(P, 'Zscore', [1])
+checkField(P, 'Save', 0)
 
 for i = 1:numel(P.PreTimes)
     P.PreTimeNames{i} = ['PreTime', num2str(P.PreTimes(i)*10), 's'];
@@ -22,14 +23,13 @@ NoiseBurstRecordings = containers.Map({'mouse193', 'mouse195', 'mouse196'}, {'R4
 VocalizationRecordings = containers.Map({'mouse193', 'mouse195', 'mouse196'}, {'R201', 'R130', 'R193'});
 
 
-P.Colors = [0.5, 0, 0.5;0.7, 0.3, 0.7;0.85, 0.6, 0.85];
-P.Yellow = [1.0000, 0.85, 0.2]; %;1.0000, 0.8500, 0.2000;0.8500, 0.6500, 0.1250;0.75, 0.55, 0.05];
+P.Colors = [0.8, 0.3, 0.25];
 P.GreyColors = [0.1, 0.1, 0.1;0.3, 0.3, 0.3;0.5, 0.5, 0.5];
 P.AnimalColors = [0.7, 0.2, 0.4;0.6, 0.5, 0.7;0.6, 0.7, 0.3];
-P.CombiColors = [0.5, 0, 0.5;0.7, 0.3, 0.7;0.85, 0.6, 0.85];
-Orange = [0.8, 0.3, 0;1, 0.5, 0;1, 0.6, 0.2];
-Blue = [0, 0, 0.5;0, 0, 1;0.3, 0.3, 1];
-P.VocColors = cat(3, Orange, Blue);
+P.CombiColors = [0.5, 0.1, 0;0.8, 0.3, 0.25;1, 0.5, 0.4];
+Yellow = [1, 1, 0.4;1, 1, 0;1, 0.8, 0];
+Blue = [0, 0, 1;0.4, 0.4, 1;0.7, 0.7, 1];
+P.VocColors = cat(3, Yellow, Blue);
 
 
 for i =1:P.AnimalNum
@@ -46,7 +46,7 @@ load(['/home/experimenter/dnp-backup/ControllerData/', Animal,'/', NoiseBurstRec
 Mask = M.FilteredMetrics.SelPix.ACX;
 ACX = imresize(Mask, ImageSize);
 
-Map = M.Metrics.Median.OnsetLatency;
+Map = zeros(ImageSize);%M.Metrics.Median.OnsetLatency;
 Mask = HF_SignFilterImage(Map', 'SelectionMethod','zscore', 'zscoreThresh', -1, 'ForceSingleRegion', 1, 'MaskExpand', 1);
 LowLatency = imresize(Mask, ImageSize);
 
@@ -83,6 +83,20 @@ FigureName = 'Vocalization Frequency Response';
 set(P.FIG,'name', FigureName, 'Color',[1,1,1],'Position',[5,NY-HPixels-60,1000, HPixels]);
 set(gcf, 'Color', 'w')
 
+Letters = {'A', 'B', 'C', 'D', 'E', 'F'};
+
+for i = 1:2
+    annotation('textbox', [0.08+0.6*(i-1), 0.88, 0.1, 0.1], 'String', Letters{i}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
+end
+for i = 1:4
+    annotation('textbox', [0.08+0.21*(i-1), 0.45, 0.1, 0.1], 'String', Letters{i+2}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
+end
+
+
+area(subplot(2, 4, 1), 0, 0, 'FaceColor', Yellow(2, :), 'EdgeColor', 'none', 'DisplayName', '4 kHz', 'ShowBaseLine', 'off', 'FaceAlpha', 0.5)
+hold(subplot(2, 4, 1), 'on')
+area(subplot(2, 4, 1), 0, 0, 'FaceColor', Blue(1, :), 'EdgeColor', 'none', 'DisplayName', '8 kHz', 'ShowBaseLine', 'off', 'FaceAlpha', 0.5)
+
 P.DispNames = {'32 kHz'};
 P.MaskGen = 0;
 P.ScaleBar = 0;
@@ -91,7 +105,7 @@ P.MaskSize = 1;
 for i = 1:numel(P.PreTimes)
     cAH = subplot(2, 4, i);
     title(cAH, [num2str(P.PreTimes(i)), ' s'])
-    MaskSize.(P.PreTimeNames{i}) = plotCombinedMaps(P, cAH, Masks.(P.PreTimeNames{i}), ImageSize, ACX, LowLatency, [0.05, 0.75, 0.05, 0.05]);
+    MaskSize.(P.PreTimeNames{i}) = plotCombinedMaps(P, cAH, Masks.(P.PreTimeNames{i}), ImageSize, ACX, LowLatency, [0.05, 0.77, 0.05, 0.05]);
     P.Legend = 0;
 end
 
@@ -113,24 +127,22 @@ xticks(cAH, X)
 xticklabels(cAH, P.PreTimes)
 xlim(cAH, [0, 12])
 
-title(cAH, 'Area Sizes') 
+title(cAH, '32 kHz') 
 ylabel(cAH, 'mm^2')
-xlabel(cAH, 'Pretime')
+xlabel(cAH, 'Pretime (s)')
 cAH.FontSize = 8;
 
 
-subplot(2, 4, 5)
-d = violinplot(Plot.Strength, P.PreTimes, 'ViolinColor', P.Yellow);
+cAH = subplot(2, 4, 5);
+d = violinplot(Plot.Strength, P.PreTimes, 'ViolinColor', P.Colors);
 title(['Response Strength'])
-xlabel('PreTime (s)')
 ylabel('AUG DF/F')
 cAH.FontSize = 8;
 
-subplot(2, 4, 6)
-d = violinplot(Plot.Size./(35.3 ^ 2), P.PreTimes, 'ViolinColor', P.Yellow);
+cAH = subplot(2, 4, 6);
+d = violinplot(Plot.Size./(35.3 ^ 2), P.PreTimes, 'ViolinColor', P.Colors);
 title('Response Size')
-xlabel('PreTime (s)')
-ylabel('mm²')
+ylabel('mm^2')
 cAH.FontSize = 8;
 
 for i = 1:P.AnimalNum
@@ -152,6 +164,8 @@ for i = 1:P.AnimalNum
     end
 end
 
+Titles = {'4 kHz', '8 kHz'};
+ylabel(subplot(2, 4, 7), 'mm^2')
 for j = 1:numel(P.VocFreqs)-1
     cAH = subplot(2, 4, j+6);
     hold(cAH, 'on')
@@ -163,8 +177,18 @@ for j = 1:numel(P.VocFreqs)-1
     xticks(cAH, X)
     xticklabels(cAH, P.PreTimes)
     xlim(cAH, [0, 12])
+    title(cAH, Titles{j})
+    cAH.FontSize = 8;
+    
 end
 
+%annotation('textbox', [0.5, 0, 0.1, 0.1], 'String', 'Pretime (s)', 'EdgeColor', 'none', 'FontSize', 8)
+text(subplot(2, 4, 6), 3.7, -1.8, 'Pretime (s)', 'FontSize', 9, 'Clipping', 'off', 'HorizontalAlignment', 'center')
 
+
+if P.Save
+    set(Fig, 'PaperPositionMode', 'auto'); % Maintain on-screen size
+    print(Fig, '/mnt/data/Samuel/ThesisPlots/VocRespFreq.png', '-dpng', '-r300'); % Save as PNG with 300 DPI
+end
     
     

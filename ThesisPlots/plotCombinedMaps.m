@@ -5,7 +5,6 @@ ACBounds = bwboundaries(ACX');
 bound = ACBounds{1};
 patch(cAH, bound(:, 2), bound(:, 1), [0.8, 0.9, 0.9], 'EdgeColor', 'none', 'HandleVisibility', 'off')
 hold(cAH, 'on')
-area(cAH, 0, 0, 'FaceColor', [0.8, 0.9, 0.9], 'EdgeColor', 'none', 'DisplayName', 'ACX', 'ShowBaseLine', 'off')
 for i = 1:numel(P.DispNames)
     area(cAH, 0, 0, 'FaceColor', P.Colors(i, :), 'EdgeColor', 'none', 'DisplayName', P.DispNames{i}, 'ShowBaseLine', 'off', 'FaceAlpha', 0.5)
 end
@@ -14,7 +13,7 @@ for j = 1:P.AnimalNum
     Ref = imref2d(ImageSize);
     load(['/mnt/data/Samuel/', Animal, '/Tf.mat']);
     area(cAH, -10, -10, 'FaceColor', P.GreyColors(j, :), 'EdgeColor', 'none', 'DisplayName', Animal, 'ShowBaseLine', 'off', 'FaceAlpha', 0.5)
-    for i = 1:numel(P.Variable)
+    for i = 1:numel(P.Measures)
         Variable = P.Measures{i};
         TransMap = imwarp(Maps.(Animal).(Variable),Tf,"OutputView",Ref);
         if P.MaskGen
@@ -35,13 +34,15 @@ end
 xlim(cAH, [0, ImageSize(1)])
 ylim(cAH, [10, ImageSize(2)])
 LLBounds = bwboundaries(LowLatency);
-boundary = LLBounds{1};
-plot(cAH, boundary(:, 2), boundary(:, 1), 'r', 'LineWidth', 2, 'DisplayName', 'Low Latency Area')
-
+if ~isempty(LLBounds)
+    boundary = LLBounds{1};
+    plot(cAH, boundary(:, 2), boundary(:, 1), 'r', 'LineWidth', 2, 'DisplayName', 'Low Latency Area')
+end
+    
 if P.ScaleBar
     plotScaleBars(P, 'k', AH, 0, P.Y, 1.5)
 end
-
+area(cAH, 0, 0, 'FaceColor', [0.8, 0.9, 0.9], 'EdgeColor', 'none', 'DisplayName', 'ACX', 'ShowBaseLine', 'off')
 set(cAH,'YDir','reverse','DataAspectRatio',[1,1,1])
 axis(cAH, 'off') 
 cAH.XAxis.FontSize = 8;

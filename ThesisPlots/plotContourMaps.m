@@ -19,7 +19,7 @@ for j = 1:P.AnimalNum
         MaskSize.(Animal)(i) = sum(Mask(:))/(P.PixelPerMM.(Animal)^2);
         for q = 1:length(bounds)
             bound = bounds{q};
-            patch(cAH, bound(:, 2), bound(:, 1), P.Colors(i, :), 'FaceAlpha', 0.5, 'EdgeColor', 'none')
+            patch(cAH, bound(:, 2), bound(:, 1), P.Colors(i, :), 'FaceAlpha', 0.5, 'EdgeColor', 'none', 'HandleVisibility', 'off')
         end
     end
     OverlapMask = Masks.(Animal).(P.Measures{1}) & Masks.(Animal).(P.Measures{2});
@@ -30,4 +30,5 @@ for j = 1:P.AnimalNum
     if j == 1
         plotScaleBars(P, 'w', cAH, 20, P.Y-18, 1)
     end
+    cAH.FontSize = 8;
 end

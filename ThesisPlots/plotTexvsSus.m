@@ -9,6 +9,7 @@ checkField(P, 'Area', 'ACX')
 checkField(P, 'ScaleBarSize', 8)
 checkField(P, 'ScaleBarSep', 7)
 checkField(P, 'Save', 0)
+checkField(P, 'FigSave', 0)
 
 P.Measures = {[P.Variable{1}, 'Resp'], [P.Variable{2}, 'Lvl']};%necassary because of slightly different naming in saved data
 
@@ -37,10 +38,10 @@ set(gcf, 'Color', 'w')
 Letters = {'A','B','C','D','E'};
 
 for i = 1:3
-    annotation('textbox', [0.005+0.33*(i-1), 0.9, 0.1, 0.1], 'String', Letters{i}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
+    annotation('textbox', [0.005+0.33*(i-1), 0.91, 0.1, 0.1], 'String', Letters{i}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
 end
 for i = 1:2
-    annotation('textbox', [0.005+0.5*(i-1), 0.46, 0.1, 0.1], 'String', Letters{i+3}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
+    annotation('textbox', [0.005+0.5*(i-1), 0.48, 0.1, 0.1], 'String', Letters{i+3}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
 end
 %% Plot transformed Masks
 
@@ -78,6 +79,8 @@ end
 P.MaskGen = 1;
 P.Legend = 1;
 P.ScaleBar = 1;
+P.DispNames = {'Texture', 'Sustained Level'};
+P.MaskSize = 1;
 plotCombinedMaps(P, AHBottom(1), Maps, ImageSize, ACX, LowLatency, [0.35, 0.07, 0.1, 0.1])
 
 
@@ -89,4 +92,9 @@ plotLineGraph(P, AHBottom(2), Labels, MaskSize)
 
 if P.Save
     save('/mnt/data/Samuel/Global/TexSusMaskSize.mat', 'MaskSize')
+end
+
+if P.FigSave
+    set(Fig, 'PaperPositionMode', 'auto'); % Maintain on-screen size
+    print(Fig, '/mnt/data/Samuel/ThesisPlots/TexvsSus.png', '-dpng', '-r300'); % Save as PNG with 300 DPI
 end

@@ -8,10 +8,11 @@ checkField(P, 'FIG', 400)
 checkField(P, 'Zscore', [2, -2])
 checkField(P, 'Area', 'ACX')
 checkField(P, 'ScaleBarSize', 6)
-checkField(P, 'ScaleBarSep', 8)
+checkField(P, 'ScaleBarSep', 9)
 checkField(P, 'Save', 0)
 checkField(P, 'Vars', [0.02, 0.2, 0.4])
 checkField(P, 'Corrs', [0, 0.8])
+
 
 P.AnimalNum = numel(P.Animals);
 VariableNum = numel(P.Variable);
@@ -46,14 +47,26 @@ MP = get(0,'MonitorPositions');
 NY = MP(1,end); HPixels = 750;
 Fig = figure(P.FIG);
 clf(P.FIG)
-FigureName = 'Vocalization versus Texture';
+FigureName = 'Texture and Sustained Level qua Variance';
 set(P.FIG,'name', FigureName, 'Color',[1,1,1],'Position',[5,NY-HPixels-60,700, HPixels]);
 set(gcf, 'Color', 'w')
 
-[~,AHTop] = axesDivide(3,2,[0.02, 0.59, 0.7, 0.38],[],0.3, 'c');
+[~,AHTop] = axesDivide(3,2,[0.05, 0.58, 0.7, 0.38],[],0.3, 'c');
 AHTop = AHTop';
 [~, AHMiddle] = axesDivide(2,1,[0.07, 0.25, 0.9, 0.3], [], 0.5, 'c');
 [~,AHBottom] = axesDivide(2,1,[0.07, 0.06, 0.9, 0.15], [], 0.5, 'c');
+
+Letters = {'A','B','C','D','E'};
+
+annotation('textbox', [0, 0.91, 0.1, 0.1], 'String', Letters{1}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
+
+
+for j = 1:2
+    for i = 1:2
+        annotation('textbox', [0+0.5*(i-1), 0.5-0.35*(j-1), 0.1, 0.1], 'String', Letters{i+1+(j-1)*2}, 'FontSize', 14, 'FontWeight', 'bold', 'EdgeColor', 'none')
+    end
+end
+
 
 %% Calc Masks 
 
@@ -107,7 +120,7 @@ P.MaskSize = 1;
 P.DispNames = {'Texture', 'Sustained Level'};
 for i = 1:TotVarNum
     cAH = AHTop(i);
-    title(cAH, Titles{i})
+    title(cAH, Titles{i}, 'FontSize', 8)
     MaskSize.(VarNames{i}) = plotCombinedMaps(P, cAH, Masks.(VarNames{i}), ImageSize, ACX, LowLatency, [0.85, 0.75, 0.05, 0.05]);
     P.Legend = 0;
 end
@@ -145,7 +158,7 @@ for i = 1:P.AnimalNum
     scatter(cAH, -10, -10, 50, P.GreyColors(i, :), 'filled', 'DisplayName', P.Animals{i}, 'MarkerFaceAlpha', 0.7)
 end
 
-legend(cAH, 'FontSize', 6, 'Position', [0.42, 0.50, 0.05, 0.05])
+%legend(cAH, 'FontSize', 6, 'Position', [0.42, 0.50, 0.05, 0.05])
 
 %% plot Violins
 
@@ -187,6 +200,13 @@ for i = 1:numel(P.Corrs)
     ylim(cAH, [-7, 7])
 end
 ylabel(AHBottom(1), 'DF/F')
+
+
+if P.Save
+    set(Fig, 'PaperPositionMode', 'auto'); % Maintain on-screen size
+    print(Fig, '/mnt/data/Samuel/ThesisPlots/TexVsSusCorrVar.png', '-dpng', '-r300'); % Save as PNG with 300 DPI
+end
+
 end
 
 function PValCheck(PVal, x, yloc, cAH)

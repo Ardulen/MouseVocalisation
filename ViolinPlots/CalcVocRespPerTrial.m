@@ -7,7 +7,7 @@ function D = CalcVocRespPerTrial(R, varargin)
 % highest pretime.
 % Input: R which is the output of computewidefield
 % Output: -D.WholeVocResp,  the area under the GRAPH during either all 10
-% Vocalization periods or the first (AllVocs 1 or 0) 8dims (X, Y, Corr, Var, Real, Rep, PreTime, VocFreq) 
+%         Vocalization periods or the first (AllVocs 1 or 0) 8dims (X, Y, Corr, Var, Real, Rep, PreTime, VocFreq) 
 %         -D.OnOffset,  area under the graph during vocalizations - area
 %         under the graph during the offset period between vocalizations 8dims (X, Y, Corr, Var, Real, Rep, PreTime, VocFreq) 
 %         -D.RegionMasks, The masks for each trial that contains all pixels
