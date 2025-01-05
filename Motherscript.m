@@ -89,8 +89,11 @@ plotVocvsSilvsSus
 %% Thesisplots based Trial Data
 % the final two plots also contain data calculated for individual
 % trials averaged over different areas, again saved for each animal on
-% /mnt/data/Samuel. from this the response size and strength for different
-% pretimes and vocalization frequencies are plotted in/out Noise using: 
+% /mnt/data/Samuel.
+D = CalcVocRespPerTrial(R, varargin);
+
+%from this the response size and strength for different
+% pretimes and vocalization frequencies are plotted in/out Noise using:
 
 [Time, Frequency, Plot] = PlotViolins;
 [~, ~, PlotSil] = PlotViolins('Silence', 1);
