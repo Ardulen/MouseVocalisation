@@ -1,4 +1,7 @@
 function Motherscript(varargin)
+% Not a true function, meant to be executed in parts to evaluate different
+% parts of the code
+
 P = parsePairs(varargin);
 checkField(P, 'Animal')
 checkField(P, 'Recording')
