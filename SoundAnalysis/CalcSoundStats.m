@@ -16,7 +16,7 @@ checkField(P, 'max_orig_dur_s', 10) % Sample length to generate for initial stat
 checkField(P, 'RealizationDurS', nan) % Duration of each Realization (should be >= max trial length)
 checkField(P, 'NRealizations', nan)
 checkField(P, 'lin_or_log_filters',2); %1--> log acoustic & mod; 2--> log acoust, lin mod; 3--> lin acoust, log mod; 4--> lin acoust, lin mod
-checkField(P, 'N_mod_channels', 200) % Number modulation filters
+checkField(P, 'N_mod_channels', 100) % Number modulation filters
 checkField(P, 'N_audio_channels', 36) % Number of acoustic filters used excluding lowpass and highpass filters on ends of spectrum
 checkField(P, 'env_sr', 25000) % Hz
 checkField(P, 'TORC', 1)
@@ -27,14 +27,18 @@ checkField(P, 'initial_sound_folder', P.orig_sound_folder);
 checkField(P, 'MaxSynthesisIterations', 30); 
 checkField(P, 'desired_synth_dur_s', nan); % Duration of synthesized sound 
 checkField(P, 'env_sr', 25000) % Hz
+checkField(P, 'mod_filt_Q_value', 10)
 checkField(P, 'FIG', 100)
 checkField(P, 'Corrs', [0, 0.8])
 checkField(P, 'Vars', [0.02, 0.4])
 
+
+
 checkField(P);
 
 % Default options for remaining parameters
-P = NoiseSynthesisParameters(P); 
+P = NoiseSynthesisParameters(P);
+
 for i = 1:numel(P.Corrs)
     WaveandFS=load(['/home/experimenter/dnp-backup/2pTestingJanek/TORCNoise/TORCNoise_corr', num2str(P.Corrs(i)), '_var', num2str(P.Vars(i)), '_real', num2str(2), '.mat']);
     Waveform{i} = WaveandFS.NoiseWaveform;

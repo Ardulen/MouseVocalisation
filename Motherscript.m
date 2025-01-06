@@ -6,7 +6,11 @@ checkField(P, 'Scale', 4)
 
 
 %% Plot Sound Stats
+% Uses part of McDermott pipeline to calculate the properties of the
+% difference TORC noises
 
+[S, P, WaveForm] = CalcSoundStats;
+PlotSoundStats(S, P, WaveForm);
 
 
 %First C_computewidefield is used to get R, for mouse 196 the resolution is
